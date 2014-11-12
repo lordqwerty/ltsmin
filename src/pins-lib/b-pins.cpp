@@ -15,7 +15,10 @@ extern "C" {
 #include <popt.h>
 #include <sys/stat.h>
 #include <dm/dm.h>
+#include <hre/unix.h>
 #include <hre/user.h>
+#include <limits.h>
+#include <stdlib.h>
 
 // LTSmin Headers
 #include <pins-lib/b-pins.h>
@@ -24,7 +27,7 @@ extern "C" {
 
 namespace ltsmin {
 
-class pins {
+class pins : public probwrapper::b::pins {
 public:
     typedef ltsmin_state_type state_vector;
     typedef int *label_vector;
@@ -41,9 +44,9 @@ public:
     void next_state_long(state_vector const& src, std::size_t group, callback& f,
                          state_vector const& dest, label_vector const& labels)
     {
-        int state[];
-        for (size_t i = 0; i < ; ++i) {
-
+        int state[get_variable_count()];
+        for (size_t i = 0; i < get_variable_count(); ++i) {
+            
         }
         probwrapper::b::pins::next_state_long (state, group, f, dest, labels);
     }
@@ -81,13 +84,10 @@ public:
     }
 
 private:
-    static const int IDX_NOT_FOUND;
     model_t model_;
     std::vector< std::map<int,int> > rmap_;
     std::vector< std::vector<int> > map_;
 };
-
-const int pins::IDX_NOT_FOUND = -1;
 
 struct state_cb
 {
@@ -107,7 +107,7 @@ struct state_cb
     {
         int lbl[pins->edge_label_count()];
         pins->make_pins_edge_labels(edge_labels, lbl);
-        int dst[pins->process_parameter_count()];
+        int dst[pins->get_variable_count()];
         pins->make_pins_state(next_state, dst);
         transition_info_t ti = GB_TI(lbl,group);
         cb (ctx, &ti, dst);
@@ -137,19 +137,30 @@ BinitGreybox (int argc,const char *argv[],void* stack_bottom)
 static int
 BgetTransitionsLong (model_t m, int group, int *src, TransitionCB cb, void *ctx)
 {
-
+    ltsmin::pins *pins = reinterpret_cast<ltsmin::pins*>(GBgetContext (m));
+    int dst[pins->get_variable_count()];
+    int labels[pins->edge_label_count()];
+    ltsmin::state_cb f(pins, cb, ctx);
+    pins->next_state_long(src, group, f, dst, labels);
+    return f.get_count();
 }
 
 static int
 BgetTransitionsAll (model_t m, int* src, TransitionCB cb, void *ctx)
 {
-
+    ltsmin::pins *pins = reinterpret_cast<ltsmin::pins*>(GBgetContext (m));
+    int dst[pins->variable_get_count()];
+    int labels[pins->edge_label_count()];
+    ltsmin::state_cb f(pins, cb, ctx);
+    pins->next_state_all(src, f, dst, labels);
+    return f.get_count();
 }
 
 static int
 BtransitionInGroup (model_t m, int* labels, int group)
 {
-
+    ltsmin::pins *pins = reinterpret_cast<ltsmin::pins*>(GBgetContext (m));
+    return pins->transition_in_group(labels, group);
 }
 
 ltsmin::pins *pins;
@@ -163,23 +174,44 @@ Bexit ()
 void
 BloadGreyboxModel (model_t m, const char *model_name)
 {
+    char abs_filename[PATH_MAX];
+    const char *ret_filename = realpath (model_name, abs_filename);
+    
+    // check file exists
+    struct stat st;
+    if (stat(ret_filename, &st) != 0)
+        Abort ("File does not exist: %s", ret_filename);
 
-    pins = new ltsmin::pins(m, std::string(model_name));
+    pins = new ltsmin::pins(m, std::string(ret_filename));
     GBsetContext(m,pins);
 
-    /**
-     *  Todo
-     */
-    int rootState[0];
+    int rootState[pins->get_variable_count()];
     ltsmin::pins::state_vector p_rootState = rootState;
     pins->get_initial_state(p_rootState);
 
-    int tmp[0];
+    int tmp[pins->get_variable_count()];
     pins->make_pins_state(rootState,tmp);
     GBsetInitialState(m, tmp);
 
     GBsetNextStateLong(m, BgetTransitionsLong);
     GBsetNextStateAll(m, BgetTransitionsAll);
+
+    matrix_t *p_dm_info       = new matrix_t;
+    matrix_t *p_dm_read_info  = new matrix_t;
+    matrix_t *p_dm_write_info = new matrix_t;
+    dm_create(p_dm_info, pins->group_count(),
+              pins->get_variable_count());
+    dm_create(p_dm_read_info, pins->group_count(),
+              pins->get_variable_count());
+    dm_create(p_dm_write_info, pins->group_count(),
+              pins->get_variable_count());
+
+    GBsetDMInfo (m, p_dm_info);
+    GBsetDMInfoRead (m, p_dm_read_info);
+    GBsetDMInfoMustWrite (m, p_dm_write_info);
+    GBsetNextStateLong (m, BgetTransitionsLong);
+    GBsetNextStateAll (m, BgetTransitionsAll);
+    GBsetTransitionInGroup(m, BtransitionInGroup);
 
     atexit(Bexit);
 }
