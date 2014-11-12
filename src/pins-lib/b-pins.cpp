@@ -14,9 +14,12 @@
 extern "C" {
 #include <popt.h>
 #include <sys/stat.h>
+#include <dm/dm.h>
+#include <hre/user.h>
 
 // LTSmin Headers
 #include <pins-lib/b-pins.h>
+#include <ltsmin-lib/ltsmin-standard.h>
 }
 
 namespace ltsmin {
@@ -26,40 +29,45 @@ public:
     typedef ltsmin_state_type state_vector;
     typedef int *label_vector;
 
-    pins(model_t& model, std::string lpsfilename)
+    pins(model_t& model, std::string bmachinename)
+        : probwrapper::b::pins(bmachinename), model_(model) 
     {
-        map_.resize(datatype_count());
-        rmap_.resize(datatype_count());
+        // Call ProBWrapper to get B machine variable count
+        map_.resize(get_variable_count());
+        rmap_.resize(get_variable_count());
     }
-
 
     template <typename callback>
     void next_state_long(state_vector const& src, std::size_t group, callback& f,
                          state_vector const& dest, label_vector const& labels)
     {
+        int state[];
+        for (size_t i = 0; i < ; ++i) {
 
+        }
+        probwrapper::b::pins::next_state_long (state, group, f, dest, labels);
     }
 
+    /*
+        This function calls the B wrapper to discover the 
+        next state. This is iteratively calling next_state_long 
+     */
     template <typename callback>
     void next_state_all(state_vector const& src, callback& f,
                         state_vector const& dest, label_vector const& labels)
     {
-        
+        int state[];
+        for (size_t i = 0; i < ; ++i) {
+            int mt;
+            int pt;
+            state[i];
+        }
+        probwrapper::b::pins::next_state_all (state, f, dest, labels);   
     }
 
     void make_pins_edge_labels(label_vector const& src, label_vector const& dst)
     {
         
-    }
-
-    void make_pins_state (state_vector const& src, state_vector const& dst)
-    {
-        
-    }
-
-    inline int find_pins_index (int mt, int pt, int idx)
-    {
-        return 1;
     }
 
     void populate_type_index(int mt, int pt)
@@ -117,23 +125,13 @@ struct state_cb
 
 extern "C" {
 
-static void
-b_popt (poptContext con, enum poptCallbackReason reason,
-            const struct poptOption *opt, const char *arg, void *data)
-{
-    (void)con;(void)opt;(void)arg;(void)data;
-    Abort ("unexpected call to B wrapper");
-}
-
-struct poptOption b_options[] = {
-    { NULL, NULL, NULL, (void*)b_popt, 0 , NULL , NULL},
-    POPT_TABLEEND
-};
-
 void
 BinitGreybox (int argc,const char *argv[],void* stack_bottom)
 {
     Warning(debug,"B init");
+    (void)argc;
+    (void)argv;
+    (void)stack_bottom;
 }
 
 static int
