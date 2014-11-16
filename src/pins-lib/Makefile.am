@@ -52,6 +52,9 @@ libmcrl2_pins_la_CXXFLAGS = $(MCRL2_PINS_CXXFLAGS) $(AM_CXXFLAGS)
 libmcrl2_pins_la_LDFLAGS  = $(MCRL2_PINS_LDFLAGS) $(MCRL2_LDFLAGS) $(AM_LDFLAGS)
 libmcrl2_pins_la_LIBADD   = $(MCRL2_PINS_LIBS) $(LIBS)
 
+# libb-pins
+libb_pins_la_sources 	  = b-pins.cpp b-pins.h
+
 # libpbes-pins
 libpbes_pins_la_SOURCES   = pbes-pins.cpp pbes-pins.h
 libpbes_pins_la_CPPFLAGS  = -DLTSMIN_PBES -DNDEBUG $(MCRL2_PINS_CPPFLAGS) $(AM_CPPFLAGS)
