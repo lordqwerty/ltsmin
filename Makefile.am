@@ -17,7 +17,11 @@ if HAVE_SPINS_COMPILER
 dist_pkgdata_DATA = spins/spins.jar
 endif
 
-MAINTAINERCLEANFILES = spins/spins.jar
+if HAVE_PROB_COMPILER
+dist_pkgdata_DATA2 = ProB-StateSpaceExtractor/ProB-StateSpaceExtractor-1.0.jar
+endif
+
+MAINTAINERCLEANFILES = spins/spins.jar ProBWrapper/ProB-StateSpaceExtractor-1.0.jar
 
 if DX_COND_doc
 mostlyclean-local: doxygen-clean
@@ -37,3 +41,6 @@ libtool: $(LIBTOOL_DEPS)
 
 spins/spins.jar:
 	test -f $@ || (cd "${top_srcdir}/spins/src" && $(ANT))
+
+ProB-StateSpaceExtractor/ProB-StateSpaceExtractor-1.0.jar:
+	test -f $@ || (cd "${top_srcdir}/ProB-StateSpaceExtractor" && "gradlew jar")

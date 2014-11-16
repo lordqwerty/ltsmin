@@ -112,6 +112,9 @@ AC_LANG_RESTORE
 dnl Checks for programs.
 ACX_SPINS([:], [AC_MSG_WARN([SpinS will not be compiled.])])
 
+dnl Checks for ProB
+ACX_PROB([:], [AC_MSG_WARN([ProB will not be compiled.])])
+
 AC_LANG_PUSH([C])
 AX_MPI([have_mpi=yes],[AC_MSG_WARN([unable to find working MPI C complier wrapper])])
 AC_LANG_POP([C])
@@ -419,6 +422,8 @@ AM_CONDITIONAL([HAVE_CADP], [test x"$acx_cadp" = xyes])
 AM_CONDITIONAL([HAVE_DVE], [true])    dnl can be built unconditionally
 AM_CONDITIONAL([HAVE_SPINS], [true])
 AM_CONDITIONAL([HAVE_SPINS_COMPILER], [test x"$acx_spins" = "xyes"])
+AM_CONDITIONAL([HAVE_PROB], [true])
+AM_CONDITIONAL([HAVE_PROB_COMPILER], [test x"$acx_prob" = "xyes"])
 AM_CONDITIONAL([HAVE_ATOMICS], [test x"$acx_atomics" = xyes])
 AM_CONDITIONAL([HAVE_VERSION_CONTROL], [test -d "${srcdir}/.git"])
 AM_CONDITIONAL([HAVE_LIBZIP], [test x"$acx_libzip" = xyes])
@@ -503,6 +508,7 @@ Configuration:
     PBES     = ${acx_pbes:-NOT FOUND, building without PBES support}
     SCOOP    = ${have_scoop:-NO, either scoop was disabled or ghc/happy/ghc-pkg/hashmap/deepseq could not be found}
     SPINS    = ${acx_spins:-NO, JDK or Ant not found (override with --with-spins)}
+    PROB     = ${acx_prob:-NO, JDK or Gradle not found (override with --with-prob)}
     SYLVAN   = ${have_sylvan:-NO, only on 64-bit systems (override with --with-sylvan)}
     XMLTO    = ${XMLTO:-NOT FOUND, not building manpages}
 ======================================================================

@@ -20,6 +20,8 @@ extern "C" {
 #include <limits.h>
 #include <stdlib.h>
 
+#include <ProBWrapper/include/bprovider.h>
+
 // LTSmin Headers
 #include <pins-lib/b-pins.h>
 #include <ltsmin-lib/ltsmin-standard.h>
@@ -27,7 +29,7 @@ extern "C" {
 
 namespace ltsmin {
 
-class pins : public probwrapper::b::pins {
+class pins {
 public:
     typedef ltsmin_state_type state_vector;
     typedef int *label_vector;
@@ -135,9 +137,9 @@ BinitGreybox (int argc,const char *argv[],void* stack_bottom)
 }
 
 static int
-BgetTransitionsLong (model_t m, int group, int *src, TransitionCB cb, void *ctx)
+BgetTransitionsLong (model_t model, int group, int *src, TransitionCB cb, void *ctx)
 {
-    ltsmin::pins *pins = reinterpret_cast<ltsmin::pins*>(GBgetContext (m));
+    ltsmin::pins *pins = reinterpret_cast<ltsmin::pins*>(GBgetContext (model));
     int dst[pins->get_variable_count()];
     int labels[pins->edge_label_count()];
     ltsmin::state_cb f(pins, cb, ctx);
@@ -146,9 +148,9 @@ BgetTransitionsLong (model_t m, int group, int *src, TransitionCB cb, void *ctx)
 }
 
 static int
-BgetTransitionsAll (model_t m, int* src, TransitionCB cb, void *ctx)
+BgetTransitionsAll (model_t model, int* src, TransitionCB cb, void *ctx)
 {
-    ltsmin::pins *pins = reinterpret_cast<ltsmin::pins*>(GBgetContext (m));
+    ltsmin::pins *pins = reinterpret_cast<ltsmin::pins*>(GBgetContext (model));
     int dst[pins->variable_get_count()];
     int labels[pins->edge_label_count()];
     ltsmin::state_cb f(pins, cb, ctx);
@@ -157,9 +159,9 @@ BgetTransitionsAll (model_t m, int* src, TransitionCB cb, void *ctx)
 }
 
 static int
-BtransitionInGroup (model_t m, int* labels, int group)
+BtransitionInGroup (model_t model, int* labels, int group)
 {
-    ltsmin::pins *pins = reinterpret_cast<ltsmin::pins*>(GBgetContext (m));
+    ltsmin::pins *pins = reinterpret_cast<ltsmin::pins*>(GBgetContext (model));
     return pins->transition_in_group(labels, group);
 }
 
@@ -172,7 +174,7 @@ Bexit ()
 }
 
 void
-BloadGreyboxModel (model_t m, const char *model_name)
+BloadGreyboxModel (model_t model, const char *model_name)
 {
     char abs_filename[PATH_MAX];
     const char *ret_filename = realpath (model_name, abs_filename);
@@ -183,18 +185,14 @@ BloadGreyboxModel (model_t m, const char *model_name)
         Abort ("File does not exist: %s", ret_filename);
 
     pins = new ltsmin::pins(m, std::string(ret_filename));
-    GBsetContext(m,pins);
+    GBsetContext(model,pins);
 
     int rootState[pins->get_variable_count()];
     ltsmin::pins::state_vector p_rootState = rootState;
     pins->get_initial_state(p_rootState);
 
     int tmp[pins->get_variable_count()];
-    pins->make_pins_state(rootState,tmp);
-    GBsetInitialState(m, tmp);
-
-    GBsetNextStateLong(m, BgetTransitionsLong);
-    GBsetNextStateAll(m, BgetTransitionsAll);
+    GBsetInitialState(model, tmp);
 
     matrix_t *p_dm_info       = new matrix_t;
     matrix_t *p_dm_read_info  = new matrix_t;
@@ -206,12 +204,12 @@ BloadGreyboxModel (model_t m, const char *model_name)
     dm_create(p_dm_write_info, pins->group_count(),
               pins->get_variable_count());
 
-    GBsetDMInfo (m, p_dm_info);
-    GBsetDMInfoRead (m, p_dm_read_info);
-    GBsetDMInfoMustWrite (m, p_dm_write_info);
-    GBsetNextStateLong (m, BgetTransitionsLong);
-    GBsetNextStateAll (m, BgetTransitionsAll);
-    GBsetTransitionInGroup(m, BtransitionInGroup);
+    GBsetDMInfo (model, p_dm_info);
+    GBsetDMInfoRead (model, p_dm_read_info);
+    GBsetDMInfoMustWrite (model, p_dm_write_info);
+    GBsetNextStateLong (model, BgetTransitionsLong);
+    GBsetNextStateAll (model, BgetTransitionsAll);
+    GBsetTransitionInGroup(model, BtransitionInGroup);
 
     atexit(Bexit);
 }

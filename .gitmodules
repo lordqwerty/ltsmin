@@ -16,3 +16,6 @@
 [submodule "ProBWrapper"]
 	path = ProBWrapper
 	url = git@github.com:lordqwerty/ProBWrapper.git
+[submodule "ProB-StateExtractor"]
+	path = ProB-StateExtractor
+	url = git@github.com:lordqwerty/ProB-StateExtractor.git
