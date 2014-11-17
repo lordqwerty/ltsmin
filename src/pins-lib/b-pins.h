@@ -14,7 +14,7 @@ extern void BinitGreybox(model_t model,const char*name);
 extern void BloadGreyboxModel(model_t model,const char*name);
 
 #ifdef __cplusplus
-}
+};
 #endif
 
 #endif
