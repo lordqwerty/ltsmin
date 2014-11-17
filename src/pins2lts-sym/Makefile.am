@@ -119,7 +119,7 @@ nodist_EXTRA_prom2lts_sym_SOURCES = automake-force-linker.cxx # req. by vset
 
 # b2lts-sym
 b2lts_sym_SOURCES  = pins2lts-sym.c
-b2lts_sym_SOURCES += ../pins-lib/b-pins.c ../pins-lib/b-pins.h
+b2lts_sym_SOURCES += ../pins-lib/b-pins.cpp ../pins-lib/b-pins.h
 b2lts_sym_LDADD    = $(PINS_LIBS)
 b2lts_sym_LDADD   += $(VSET_LIBS) $(PROB_LIBS)
 b2lts_sym_CPPFLAGS = -DPROB $(PROB_CPPFLAGS) $(SYM_CPP_FLAGS)

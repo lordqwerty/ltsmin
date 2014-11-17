@@ -28,6 +28,10 @@ if HAVE_LIBPBES
 noinst_LTLIBRARIES += libpbes-pins.la
 endif
 
+if HAVE_PROB
+noinst_LTLIBRARIES += libb-pins.la
+endif
+
 # Warning overwriting user variable! (Avoid PBES warnings)
 CXXFLAGS = @CXXFLAGS@ -Wno-unused-parameter
 
@@ -53,7 +57,11 @@ libmcrl2_pins_la_LDFLAGS  = $(MCRL2_PINS_LDFLAGS) $(MCRL2_LDFLAGS) $(AM_LDFLAGS)
 libmcrl2_pins_la_LIBADD   = $(MCRL2_PINS_LIBS) $(LIBS)
 
 # libb-pins
-libb_pins_la_sources 	  = b-pins.cpp b-pins.h
+libb_pins_la_SOURCES  = b-pins.cpp b-pins.h
+libb_pins_la_CPPFLAGS = -DPROB -DNDEBUG $(PROB_PINS_CPPFLAGS) $(AM_CPPFLAGS)
+libb_pins_la_CXXFLAGS = $(PROB_PINS_CXXFLAGS) $(AM_CXXFLAGS) -I/usr/java/default/include -I/usr/java/default/include/linux -ljvm
+libb_pins_la_LDFLAGS  = $(PROB_PINS_LDFLAGS) $(PROB_LDFLAGS) $(AM_LDFLAGS)
+libb_pins_la_LIBADD   = $(PROB_PINS_LIBS) $(LIBS)
 
 # libpbes-pins
 libpbes_pins_la_SOURCES   = pbes-pins.cpp pbes-pins.h

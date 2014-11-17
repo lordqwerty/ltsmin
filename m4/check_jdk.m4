@@ -20,6 +20,17 @@ AC_DEFUN([CHECK_JDK],
 
     AC_SUBST(JAVA, [$JAVA_HOME/jre/bin/java])
 
+    if test "x$JAVAC" != x; then
+    AX_JNI_INCLUDE_DIR
+    for JNI_INCLUDE_DIR in $JNI_INCLUDE_DIRS
+    do
+        JNI_CPPFLAGS="$JNI_CPPFLAGS -I$JNI_INCLUDE_DIR"
+    done
+    # Export the paths so that the makefile gets them
+    AC_SUBST(JNI_CPPFLAGS, $JNI_CPPFLAGS)
+fi
+AM_CONDITIONAL([X_JNI],[test "x$JNI_CPPFLAGS" != x])
+
     AC_ARG_VAR(JAVAC_OPTIMIZED, [Java compiler option for faster performance. Default is on])
     test -z $JAVAC_OPTIMIZED && JAVAC_OPTIMIZED=on
 
@@ -39,4 +50,3 @@ AC_DEFUN([CHECK_JNI],
      AC_MSG_WARN([Cannot find or validate header file $JAVA_HOME_INCL/jni.h])
    )
 ])
-

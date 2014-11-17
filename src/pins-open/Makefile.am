@@ -11,6 +11,9 @@ pkglib_LTLIBRARIES  = libetf-open.la
 if HAVE_SPINS
 pkglib_LTLIBRARIES += libprom-open.la
 endif
+if HAVE_PROB
+pkglib_LTLIBRARIES += libb-open.la
+endif
 if HAVE_LIBSTEP_INFO
 pkglib_LTLIBRARIES += liblpo-open.la
 endif
@@ -74,3 +77,9 @@ libprom_open_la_CPPFLAGS = -DSPINS $(SPINS_CPPFLAGS) $(CADP_CPPFLAGS)
 libprom_open_la_CPPFLAGS+= $(AM_CPPFLAGS)
 libprom_open_la_LIBADD   = $(PINS_LIB)
 
+# libb-open.la
+libb_open_la_SOURCES  = pins-open.c ../pins-lib/prom-pins.c
+libb_open_la_SOURCES += ../pins-lib/prom-pins.h
+libb_open_la_CPPFLAGS = -DPROB $(PROB_CPPFLAGS) $(CADP_CPPFLAGS)
+libb_open_la_CPPFLAGS+= $(AM_CPPFLAGS)
+libb_open_la_LIBADD   = $(PINS_LIB)

@@ -508,8 +508,8 @@ Configuration:
     PBES     = ${acx_pbes:-NOT FOUND, building without PBES support}
     SCOOP    = ${have_scoop:-NO, either scoop was disabled or ghc/happy/ghc-pkg/hashmap/deepseq could not be found}
     SPINS    = ${acx_spins:-NO, JDK or Ant not found (override with --with-spins)}
-    PROB     = ${acx_prob:-NO, JDK or Gradle not found (override with --with-prob)}
     SYLVAN   = ${have_sylvan:-NO, only on 64-bit systems (override with --with-sylvan)}
+    PROB     = ${acx_prob:-NO, JDK or Gradle not found (override with --with-prob)}
     XMLTO    = ${XMLTO:-NOT FOUND, not building manpages}
 ======================================================================
 EOM
