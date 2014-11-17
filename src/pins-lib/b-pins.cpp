@@ -29,6 +29,10 @@ extern "C" {
 
 namespace ltsmin {
 
+    class pins {
+
+    };
+
 }
 
 extern "C" {
