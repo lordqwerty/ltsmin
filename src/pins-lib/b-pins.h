@@ -8,7 +8,7 @@ extern "C" {
 #include <popt.h>
 #include <pins-lib/pins.h>
 
-extern struct poptOption b_options[];
+extern struct poptOption prob_options[];
 
 extern void BinitGreybox(model_t model,const char*name);
 extern void BloadGreyboxModel(model_t model,const char*name);

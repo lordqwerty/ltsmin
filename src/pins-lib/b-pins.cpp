@@ -35,6 +35,30 @@ namespace ltsmin {
 
 }
 
+static void
+prob_popt (poptContext con,
+             enum poptCallbackReason reason,
+             const struct poptOption *opt,
+             const char *arg, void *data)
+{
+    (void)con;(void)opt;(void)arg;(void)data;
+    switch(reason){
+    case POPT_CALLBACK_REASON_PRE:
+        break;
+    case POPT_CALLBACK_REASON_POST:
+        Warning(info,"B machine module initialized");
+        return;
+    case POPT_CALLBACK_REASON_OPTION:
+        break;
+    }
+    Abort("unexpected call to prob_popt");
+}
+
+struct poptOption prob_options[]= {
+    { NULL, 0 , POPT_ARG_CALLBACK|POPT_CBFLAG_POST|POPT_CBFLAG_SKIPOPTION , (void*)&prob_popt, 0 , NULL , NULL },
+    POPT_TABLEEND
+};
+
 extern "C" {
 
 void
