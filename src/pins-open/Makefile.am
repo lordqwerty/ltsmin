@@ -78,8 +78,8 @@ libprom_open_la_CPPFLAGS+= $(AM_CPPFLAGS)
 libprom_open_la_LIBADD   = $(PINS_LIB)
 
 # libb-open.la
-libb_open_la_SOURCES  = pins-open.c ../pins-lib/prom-pins.c
-libb_open_la_SOURCES += ../pins-lib/prom-pins.h
+libb_open_la_SOURCES  = pins-open.c ../pins-lib/b-pins.c
+libb_open_la_SOURCES += ../pins-lib/b-pins.h
 libb_open_la_CPPFLAGS = -DPROB $(PROB_CPPFLAGS) $(CADP_CPPFLAGS)
 libb_open_la_CPPFLAGS+= $(AM_CPPFLAGS)
 libb_open_la_LIBADD   = $(PINS_LIB)
