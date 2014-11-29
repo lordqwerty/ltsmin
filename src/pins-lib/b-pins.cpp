@@ -20,7 +20,7 @@ extern "C" {
 #include <limits.h>
 #include <stdlib.h>
 
-#include "../../ProBWrapper/include/bprovider.h"
+#include </usr/local/ProBWrapper/include/bprovider.h>
 
 // LTSmin Headers
 #include <pins-lib/b-pins.h>
@@ -30,6 +30,21 @@ extern "C" {
 namespace ltsmin {
 
     class pins {
+
+    public:
+
+        BProvider b; 
+
+        void load_b_machine(char* machine)
+        {
+            b.load_b_machine(machine);   
+        }
+
+        int get_var_count() 
+        {
+            int res = b.get_variable_count();
+            return res;
+        }
 
     };
 
@@ -42,10 +57,14 @@ prob_popt (poptContext con,
              const char *arg, void *data)
 {
     (void)con;(void)opt;(void)arg;(void)data;
+
     switch(reason){
     case POPT_CALLBACK_REASON_PRE:
         break;
     case POPT_CALLBACK_REASON_POST:
+        GBregisterPreLoader("mch",       BinitGreybox);
+        GBregisterLoader("mch",          BloadGreyboxModel);
+
         Warning(info,"B machine module initialized");
         return;
     case POPT_CALLBACK_REASON_OPTION:
@@ -61,12 +80,24 @@ struct poptOption prob_options[]= {
 
 extern "C" {
 
+ltsmin::pins *pins;
+
 void
-BinitGreybox (model_t model,const char*name)
+BinitGreybox (model_t model, const char* model_name)
 {
     Warning(debug,"B init");
+
+    char abs_filename[PATH_MAX];
+    char *ret_filename = realpath (model_name, abs_filename);
+    
+    // check file exists
+    struct stat st;
+    if (stat(ret_filename, &st) != 0)
+        Abort ("File does not exist: %s", ret_filename);
+
+    pins->load_b_machine(ret_filename);
+
     (void)model;
-    (void)name;
 }
 
 static int
@@ -90,19 +121,23 @@ BtransitionInGroup (model_t model, int* labels, int group)
 void
 Bexit ()
 {
-    
+    delete pins;
 }
 
 void
 BloadGreyboxModel (model_t model, const char *model_name)
 {
-    char abs_filename[PATH_MAX];
-    const char *ret_filename = realpath (model_name, abs_filename);
-    
-    // check file exists
-    struct stat st;
-    if (stat(ret_filename, &st) != 0)
-        Abort ("File does not exist: %s", ret_filename);
+    // create the LTS type LTSmin will generate
+    lts_type_t ltstype = lts_type_create();
+
+    // set the length of the state
+    lts_type_set_state_length(ltstype, pins->get_var_count());
+
+    // done with ltstype
+    lts_type_validate(ltstype);
+
+    // make sure to set the lts-type before anything else in the GB
+    GBsetLTStype(model, ltstype);
 
     GBsetContext(model,model);
 
