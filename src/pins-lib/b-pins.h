@@ -11,7 +11,7 @@ extern "C" {
 extern struct poptOption prob_options[];
 
 extern void BinitGreybox(model_t model,const char*name);
-extern void BloadGreyboxModel(model_t model,const char*name);
+extern void BloadGreyboxModel(model_t model, const char*name);
 
 #ifdef __cplusplus
 };

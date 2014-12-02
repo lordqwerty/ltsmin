@@ -33,17 +33,28 @@ namespace ltsmin {
 
     public:
 
-        BProvider* b = new BProvider(); 
-
-        void load_machine(char* machine)
+        void load_machine(const char* machine)
         {
             b->load_b_machine(machine);   
         }
 
-        int get_var_count() 
+        int get_variable_count() 
         {
             return b->get_variable_count();
         }
+
+        int* get_initial_state() 
+        {
+            return b->get_initial_state();
+        }
+
+        int* get_next_state_long(int* id)
+        {
+            return b->get_next_state_long(id);
+        }
+
+    private:
+        BProvider* b = new BProvider(); 
 
     };
 
@@ -61,14 +72,15 @@ prob_popt (poptContext con,
     case POPT_CALLBACK_REASON_PRE:
         break;
     case POPT_CALLBACK_REASON_POST:
-        GBregisterPreLoader("mch",       BinitGreybox);
-        GBregisterLoader("mch",          BloadGreyboxModel);
+        GBregisterPreLoader("mch", BinitGreybox);
+        GBregisterLoader("mch", BloadGreyboxModel);
 
         Warning(info,"B machine module initialized");
         return;
     case POPT_CALLBACK_REASON_OPTION:
         break;
     }
+
     Abort("unexpected call to prob_popt");
 }
 
@@ -88,6 +100,8 @@ BinitGreybox (model_t model, const char* model_name)
 
     char abs_filename[PATH_MAX];
     char *ret_filename = realpath (model_name, abs_filename);
+
+    std::cout << ret_filename;
     
     // check file exists
     struct stat st;
@@ -124,13 +138,13 @@ Bexit ()
 }
 
 void
-BloadGreyboxModel (model_t model, const char *model_name)
+BloadGreyboxModel (model_t model, const char* model_name)
 {
     // create the LTS type LTSmin will generate
     lts_type_t ltstype = lts_type_create();
 
     // set the length of the state
-    lts_type_set_state_length(ltstype, pins->get_var_count());
+    lts_type_set_state_length(ltstype, pins->get_variable_count());
 
     // done with ltstype
     lts_type_validate(ltstype);
@@ -138,14 +152,9 @@ BloadGreyboxModel (model_t model, const char *model_name)
     // make sure to set the lts-type before anything else in the GB
     GBsetLTStype(model, ltstype);
 
-    GBsetContext(model,model);
+    GBsetContext(model, pins);
 
-    // var count
-    int rootState[0];
-
-    // Var count
-    int tmp[0];
-    GBsetInitialState(model, tmp);
+    GBsetInitialState(model, pins->get_initial_state());
 
     GBsetNextStateLong (model, BgetTransitionsLong);
     GBsetNextStateAll (model, BgetTransitionsAll);
