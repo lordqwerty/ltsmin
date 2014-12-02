@@ -1,0 +1,2 @@
+#define probwrapper_VERSION_MAJOR @probwrapper_VERSION_MAJOR@
+#define probwrapper_VERSION_MINOR @probwrapper_VERSION_MINOR@

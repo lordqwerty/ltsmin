@@ -1,0 +1,29 @@
+# CMake
+CMakeCache.txt
+CMakeFiles
+Makefile
+Makefile.in
+cmake_install.cmake
+install_manifest.txt
+CTestTestfile.cmake
+CPackConfig.cmake
+CPackSourceConfig.cmake
+DartConfiguration.tcl
+
+# Compiled source 
+prob
+Test
+*.a
+
+# ProB Stuff
+null.groovy
+prob_log.txt
+
+# General Junk
+.DS_Store
+*~
+*.log
+*.swp
+bin/
+share/
+include/
