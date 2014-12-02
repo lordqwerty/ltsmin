@@ -20,7 +20,7 @@ extern "C" {
 #include <limits.h>
 #include <stdlib.h>
 
-#include </usr/local/ProBWrapper/include/bprovider.h>
+#include "../../ProBWrapper/include/bprovider.h"
 
 // LTSmin Headers
 #include <pins-lib/b-pins.h>
@@ -33,17 +33,16 @@ namespace ltsmin {
 
     public:
 
-        BProvider b; 
+        BProvider* b = new BProvider(); 
 
-        void load_b_machine(char* machine)
+        void load_machine(char* machine)
         {
-            b.load_b_machine(machine);   
+            b->load_b_machine(machine);   
         }
 
         int get_var_count() 
         {
-            int res = b.get_variable_count();
-            return res;
+            return b->get_variable_count();
         }
 
     };
@@ -95,7 +94,7 @@ BinitGreybox (model_t model, const char* model_name)
     if (stat(ret_filename, &st) != 0)
         Abort ("File does not exist: %s", ret_filename);
 
-    pins->load_b_machine(ret_filename);
+    pins->load_machine(ret_filename);
 
     (void)model;
 }
