@@ -27,6 +27,9 @@ extern "C" {
 #include <ltsmin-lib/ltsmin-standard.h>
 }
 
+// Global access. Reduces number of VMs
+BProvider* b = new BProvider();
+
 namespace ltsmin {
 
     class pins {
@@ -52,10 +55,6 @@ namespace ltsmin {
         {
             return b->get_next_state_long(id);
         }
-
-    private:
-        BProvider* b = new BProvider(); 
-
     };
 
 }
@@ -100,13 +99,13 @@ BinitGreybox (model_t model, const char* model_name)
 
     char abs_filename[PATH_MAX];
     char *ret_filename = realpath (model_name, abs_filename);
-
-    std::cout << ret_filename;
     
     // check file exists
     struct stat st;
     if (stat(ret_filename, &st) != 0)
         Abort ("File does not exist: %s", ret_filename);
+
+    printf("%s\n", ret_filename);
 
     pins->load_machine(ret_filename);
 
@@ -145,6 +144,13 @@ BloadGreyboxModel (model_t model, const char* model_name)
 
     // set the length of the state
     lts_type_set_state_length(ltstype, pins->get_variable_count());
+
+    // add an "int" type for a state slot
+    int int_type = lts_type_add_type(ltstype, "int", NULL);
+    lts_type_set_format (ltstype, int_type, LTStypeDirect);
+
+    // edge label types
+    lts_type_set_edge_label_count (ltstype, pins->get_variable_count());
 
     // done with ltstype
     lts_type_validate(ltstype);
