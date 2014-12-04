@@ -29,6 +29,7 @@ extern "C" {
 
 // Global access. Reduces number of VMs
 BProvider* b = new BProvider();
+int varCount;
 
 namespace ltsmin {
 
@@ -43,6 +44,10 @@ namespace ltsmin {
 
         int get_variable_count() 
         {
+            if(varCount == NULL) {
+                varCount = b->get_variable_count();
+            }
+
             return b->get_variable_count();
         }
 
@@ -159,6 +164,35 @@ BloadGreyboxModel (model_t model, const char* model_name)
     GBsetLTStype(model, ltstype);
 
     GBsetContext(model, pins);
+
+    matrix_t *p_dm_info       = new matrix_t;
+    matrix_t *p_dm_read_info  = new matrix_t;
+    matrix_t *p_dm_write_info = new matrix_t;
+    dm_create(p_dm_info, pins->get_variable_count(),
+              pins->get_variable_count());
+    dm_create(p_dm_read_info, pins->get_variable_count(),
+              pins->get_variable_count());
+    dm_create(p_dm_write_info, pins->get_variable_count(),
+              pins->get_variable_count());
+
+    for (size_t i = 0; i < pins->get_variable_count(); i++) {
+        for (size_t j = 0; j < i; j++) {
+            dm_set (p_dm_info, 1, 1);
+            dm_set (p_dm_read_info, 1, 1);
+        }
+
+        for (size_t j = 0; j < i; j++) {
+            dm_set (p_dm_info, 1, 1);
+            dm_set (p_dm_write_info, 1, 1);
+        }
+    }
+    
+    GBsetMatrix(model, LTSMIN_MATRIX_ACTIONS_READS, p_dm_info, PINS_MAY_SET,
+                                            PINS_INDEX_GROUP, PINS_INDEX_STATE_VECTOR);
+
+    GBsetDMInfo (model, p_dm_info);
+    GBsetDMInfoRead (model, p_dm_read_info);
+    GBsetDMInfoMustWrite (model, p_dm_write_info);
 
     GBsetInitialState(model, pins->get_initial_state());
 
