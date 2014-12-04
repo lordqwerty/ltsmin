@@ -48,7 +48,7 @@ namespace ltsmin {
                 varCount = b->get_variable_count();
             }
 
-            return b->get_variable_count();
+            return varCount;
         }
 
         int* get_initial_state() 
@@ -100,7 +100,7 @@ ltsmin::pins *pins;
 void
 BinitGreybox (model_t model, const char* model_name)
 {
-    Warning(debug,"B init");
+    Warning(info,"B init");
 
     char abs_filename[PATH_MAX];
     char *ret_filename = realpath (model_name, abs_filename);
