@@ -29,13 +29,14 @@ extern "C" {
 
 // Global access. Reduces number of VMs
 BProvider* b = new BProvider();
-int varCount;
 
 namespace ltsmin {
 
     class pins {
 
     public:
+
+        int varCount;
 
         void load_machine(const char* machine)
         {
@@ -61,8 +62,7 @@ namespace ltsmin {
             return b->get_next_state_long(id);
         }
     };
-
-}
+};
 
 static void
 prob_popt (poptContext con,
@@ -103,14 +103,12 @@ BinitGreybox (model_t model, const char* model_name)
     Warning(info,"B init");
 
     char abs_filename[PATH_MAX];
-    char *ret_filename = realpath (model_name, abs_filename);
+    const char* ret_filename = realpath (model_name, abs_filename);
     
     // check file exists
     struct stat st;
     if (stat(ret_filename, &st) != 0)
         Abort ("File does not exist: %s", ret_filename);
-
-    printf("%s\n", ret_filename);
 
     pins->load_machine(ret_filename);
 
@@ -120,7 +118,16 @@ BinitGreybox (model_t model, const char* model_name)
 static int
 BgetTransitionsLong (model_t model, int group, int *src, TransitionCB cb, void *ctx)
 {
-    return 0;
+    int dst[pins->get_variable_count()]; // next state values
+    memcpy(dst, src, sizeof(int) * pins->get_variable_count());
+
+    int action[1];  
+    transition_info_t transition_info = {action, group};
+
+    cb(ctx, &transition_info, dst, NULL);
+    pins->get_next_state_long(src);
+
+    return 1;
 }
 
 static int
@@ -139,6 +146,7 @@ void
 Bexit ()
 {
     delete pins;
+    delete b;
 }
 
 void
@@ -166,33 +174,15 @@ BloadGreyboxModel (model_t model, const char* model_name)
     GBsetContext(model, pins);
 
     matrix_t *p_dm_info       = new matrix_t;
-    matrix_t *p_dm_read_info  = new matrix_t;
-    matrix_t *p_dm_write_info = new matrix_t;
+    
     dm_create(p_dm_info, pins->get_variable_count(),
-              pins->get_variable_count());
-    dm_create(p_dm_read_info, pins->get_variable_count(),
-              pins->get_variable_count());
-    dm_create(p_dm_write_info, pins->get_variable_count(),
               pins->get_variable_count());
 
     for (size_t i = 0; i < pins->get_variable_count(); i++) {
-        for (size_t j = 0; j < i; j++) {
-            dm_set (p_dm_info, 1, 1);
-            dm_set (p_dm_read_info, 1, 1);
-        }
-
-        for (size_t j = 0; j < i; j++) {
-            dm_set (p_dm_info, 1, 1);
-            dm_set (p_dm_write_info, 1, 1);
-        }
+        dm_set (p_dm_info, 0, i);
     }
-    
-    GBsetMatrix(model, LTSMIN_MATRIX_ACTIONS_READS, p_dm_info, PINS_MAY_SET,
-                                            PINS_INDEX_GROUP, PINS_INDEX_STATE_VECTOR);
 
     GBsetDMInfo (model, p_dm_info);
-    GBsetDMInfoRead (model, p_dm_read_info);
-    GBsetDMInfoMustWrite (model, p_dm_write_info);
 
     GBsetInitialState(model, pins->get_initial_state());
 
