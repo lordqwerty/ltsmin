@@ -19,6 +19,7 @@ extern "C" {
 #include <hre/user.h>
 #include <limits.h>
 #include <stdlib.h>
+#include <jni.h>
 
 #include "../../ProBWrapper/include/bprovider.h"
 
@@ -27,15 +28,13 @@ extern "C" {
 #include <ltsmin-lib/ltsmin-standard.h>
 }
 
-// Global access. Reduces number of VMs
-BProvider* b = new BProvider();
-
 namespace ltsmin {
 
     class pins {
 
     public:
 
+        BProvider* b = new BProvider();
         int varCount;
 
         void load_machine(const char* machine)
@@ -57,10 +56,10 @@ namespace ltsmin {
             return b->get_initial_state();
         }
 
-        int* get_next_state_long(int* id)
+        int* get_next_state_long(int* id, TransitionCB cb)
         {
             return b->get_next_state_long(id);
-        }
+        }            
     };
 };
 
@@ -95,7 +94,7 @@ struct poptOption prob_options[]= {
 
 extern "C" {
 
-ltsmin::pins *pins;
+ltsmin::pins *pins = new ltsmin::pins();
 
 void
 BinitGreybox (model_t model, const char* model_name)
@@ -119,13 +118,12 @@ static int
 BgetTransitionsLong (model_t model, int group, int *src, TransitionCB cb, void *ctx)
 {
     int dst[pins->get_variable_count()]; // next state values
-    memcpy(dst, src, sizeof(int) * pins->get_variable_count());
 
     int action[1];  
     transition_info_t transition_info = {action, group};
 
-    cb(ctx, &transition_info, dst, NULL);
-    pins->get_next_state_long(src);
+    
+    pins->get_next_state_long(src, cb);
 
     return 1;
 }
@@ -146,7 +144,6 @@ void
 Bexit ()
 {
     delete pins;
-    delete b;
 }
 
 void
@@ -163,7 +160,7 @@ BloadGreyboxModel (model_t model, const char* model_name)
     lts_type_set_format (ltstype, int_type, LTStypeDirect);
 
     // edge label types
-    lts_type_set_edge_label_count (ltstype, pins->get_variable_count());
+    lts_type_set_edge_label_count (ltstype, 0);
 
     // done with ltstype
     lts_type_validate(ltstype);
