@@ -59,7 +59,7 @@ namespace ltsmin {
         int* get_next_state_long(int* id, TransitionCB cb)
         {
             return b->get_next_state_long(id);
-        }            
+        }         
     };
 };
 
