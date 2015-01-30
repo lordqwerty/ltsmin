@@ -104,6 +104,6 @@ b2lts_seq_SOURCES  = pins2lts-seq.c
 b2lts_seq_SOURCES += ../pins-lib/b-pins.cpp ../pins-lib/b-pins.h
 b2lts_seq_LDADD    = $(HRE_LIB) $(PINS_LIBS)
 b2lts_seq_LDADD   += $(VSET_LIBS) $(PROB_LIBS)
-b2lts_seq_CPPFLAGS = -DPROB $(PROB_CPPFLAGS) $(SEQ_CPPFLAGS) -I/usr/java/default/include -I/usr/java/default/include/linux -ljvm
+b2lts_seq_CPPFLAGS = -DPROB $(PROB_CPPFLAGS) $(SEQ_CPPFLAGS) -I$(JAVA_HOME)/include -I$(JAVA_HOME)/include/linux -ljvm
 b2lts_seq_LDFLAGS  = $(PROB_LDFLAGS) $(AM_LDFLAGS)
 nodist_EXTRA_b2lts_seq_SOURCES = automake-force-linker.cxx # req. by vset

@@ -122,6 +122,6 @@ b2lts_sym_SOURCES  = pins2lts-sym.c
 b2lts_sym_SOURCES += ../pins-lib/b-pins.cpp ../pins-lib/b-pins.h
 b2lts_sym_LDADD    = $(PINS_LIBS)
 b2lts_sym_LDADD   += $(VSET_LIBS) $(PROB_LIBS)
-b2lts_sym_CPPFLAGS = -DPROB $(PROB_CPPFLAGS) $(SYM_CPP_FLAGS) -I/usr/java/default/include -I/usr/java/default/include/linux -ljvm
+b2lts_sym_CPPFLAGS = -DPROB $(PROB_CPPFLAGS) $(SYM_CPP_FLAGS) -I$(JAVA_HOME)/include -I$(JAVA_HOME)/include/linux -ljvm
 b2lts_sym_LDFLAGS  = $(PROB_LDFLAGS) $(SYM_LD_FLAGS)
 nodist_EXTRA_b2lts_sym_SOURCES = automake-force-linker.cxx # req. by vset
