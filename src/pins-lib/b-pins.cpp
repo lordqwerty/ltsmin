@@ -37,6 +37,17 @@ namespace ltsmin {
         BProvider* b = new BProvider();
         int varCount;
 
+        void attach_thread()
+        {
+            JavaVM* vm = b->get_jvm();
+            JNIEnv* env;
+            JavaVMAttachArgs args;
+            args.version = JNI_VERSION_1_6; 
+
+            vm->AttachCurrentThread((void**)&env, &args);
+            
+        }  
+
         void load_machine(const char* machine)
         {
             b->load_b_machine(machine);   
@@ -59,18 +70,7 @@ namespace ltsmin {
         int* get_next_state_long(int* id, TransitionCB cb)
         {
             return b->get_next_state_long(id);
-        }    
-
-        void attach_thread()
-        {
-            JavaVM* vm = b->get_jvm();
-            JNIEnv* env;
-            JavaVMAttachArgs args;
-            args.version = JNI_VERSION_1_6; 
-
-            vm->AttachCurrentThread((void**)&env, &args);
-            
-        }   
+        }     
     };
 };
 
@@ -111,6 +111,8 @@ void
 BinitGreybox (model_t model, const char* model_name)
 {
     Warning(info,"B init");
+
+    pins->attach_thread();
 
     char abs_filename[PATH_MAX];
     const char* ret_filename = realpath (model_name, abs_filename);
@@ -160,6 +162,7 @@ Bexit ()
 void
 BloadGreyboxModel (model_t model, const char* model_name)
 {
+
     pins->attach_thread();
 
     // create the LTS type LTSmin will generate
@@ -185,6 +188,7 @@ BloadGreyboxModel (model_t model, const char* model_name)
 
     matrix_t *p_dm_info       = new matrix_t;
     
+    // Sets the B Transition group to just one with read/write access
     dm_create(p_dm_info, 1,
               pins->get_variable_count());
 
