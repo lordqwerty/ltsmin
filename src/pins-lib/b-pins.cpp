@@ -59,7 +59,18 @@ namespace ltsmin {
         int* get_next_state_long(int* id, TransitionCB cb)
         {
             return b->get_next_state_long(id);
-        }         
+        }    
+
+        void attach_thread()
+        {
+            JavaVM* vm = b->get_jvm();
+            JNIEnv* env;
+            JavaVMAttachArgs args;
+            args.version = JNI_VERSION_1_6; 
+
+            vm->AttachCurrentThread((void**)&env, &args);
+            
+        }   
     };
 };
 
@@ -149,6 +160,8 @@ Bexit ()
 void
 BloadGreyboxModel (model_t model, const char* model_name)
 {
+    pins->attach_thread();
+
     // create the LTS type LTSmin will generate
     lts_type_t ltstype = lts_type_create();
 
