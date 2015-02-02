@@ -45,6 +45,10 @@ if HAVE_SYLVAN
 SYM_CPP_FLAGS += $(SYLVAN_CPPFLAGS)
 endif
 
+if HAVE_PROB
+bin_PROGRAMS += bpinssim-b
+endif
+
 # pinssim-etf
 pinssim_etf_SOURCES   = pinssim.c
 pinssim_etf_SOURCES  += ../pins-lib/etf-pins.c ../pins-lib/etf-pins.h
@@ -112,3 +116,12 @@ pinssim_prom_LDADD   += $(VSET_LIBS) $(SPINS_LIBS)
 pinssim_prom_CPPFLAGS = -DSPINS $(SPINS_CPPFLAGS) $(SYM_CPPFLAGS)
 pinssim_prom_LDFLAGS  = $(SPINS_LDFLAGS) $(SYM_LDFLAGS)
 nodist_EXTRA_pinssim_prom_SOURCES = automake-force-linker.cxx # req. by vset
+
+# pinssim-b
+b2lts_sym_SOURCES  = pinssim.c
+b2lts_sym_SOURCES += ../pins-lib/b-pins.cpp ../pins-lib/b-pins.h
+b2lts_sym_LDADD    = $(PINS_LIBS)
+b2lts_sym_LDADD   += $(VSET_LIBS) $(PROB_LIBS)
+b2lts_sym_CPPFLAGS = -DPROB $(PROB_CPPFLAGS) $(SYM_CPP_FLAGS) -I$(JAVA_HOME)/include -I$(JAVA_HOME)/include/linux -ljvm
+b2lts_sym_LDFLAGS  = $(PROB_LDFLAGS) $(SYM_LD_FLAGS)
+nodist_EXTRA_b2lts_sym_SOURCES = automake-force-linker.cxx # req. by vset
