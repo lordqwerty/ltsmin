@@ -185,7 +185,7 @@ BloadGreyboxModel (model_t model, const char* model_name)
 
     matrix_t *p_dm_info       = new matrix_t;
     
-    dm_create(p_dm_info, pins->get_variable_count(),
+    dm_create(p_dm_info, 1,
               pins->get_variable_count());
 
     for (size_t i = 0; i < pins->get_variable_count(); i++) {
