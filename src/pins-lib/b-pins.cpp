@@ -35,41 +35,61 @@ namespace ltsmin {
     public:
 
         BProvider* b = new BProvider();
-        int varCount;
+        JavaVM* vm = b->get_jvm();
 
+        /**
+         *  For every call to the Java Wrapper we wish to make we have to create
+         *  a new JNIEnv to make the call and attach it. Remember to detach after every
+         *  call. 
+         */
         void attach_thread()
         {
-            JavaVM* vm = b->get_jvm();
-            JNIEnv* env;
             JavaVMAttachArgs args;
-            args.version = JNI_VERSION_1_6; 
-
-            vm->AttachCurrentThread((void**)&env, &args);
-            
+            args.version = JNI_VERSION_1_6;
+            JNIEnv* newEnv;
+            vm->AttachCurrentThread((void**)&newEnv, &args);
         }  
+
+        /**
+         *  Detaches the current query to the Java Wrapper.
+         *  Failure to detach after calls will result in JNI thread in non-java thread
+         */
+        void unattach_thread()
+        {
+            vm->DetachCurrentThread();
+        }
 
         void load_machine(const char* machine)
         {
+            attach_thread();
             b->load_b_machine(machine);   
+            unattach_thread();
         }
 
         int get_variable_count() 
         {
-            if(varCount == NULL) {
-                varCount = b->get_variable_count();
-            }
-
+            attach_thread();
+            int varCount = b->get_variable_count();
+            unattach_thread();
             return varCount;
         }
 
         int* get_initial_state() 
         {
-            return b->get_initial_state();
+            attach_thread();
+            int* init = b->get_initial_state();
+            unattach_thread();
+
+            return init;
         }
 
         int* get_next_state_long(int* id, TransitionCB cb)
         {
-            return b->get_next_state_long(id);
+            attach_thread();
+            int* next = b->get_next_state_long(id);
+            unattach_thread();
+
+            return next;
         }     
     };
 };
@@ -112,10 +132,8 @@ BinitGreybox (model_t model, const char* model_name)
 {
     Warning(info,"B init");
 
-    pins->attach_thread();
-
     char abs_filename[PATH_MAX];
-    const char* ret_filename = realpath (model_name, abs_filename);
+    char* ret_filename = realpath (model_name, abs_filename);
     
     // check file exists
     struct stat st;
@@ -156,14 +174,13 @@ BtransitionInGroup (model_t model, int* labels, int group)
 void
 Bexit ()
 {
+    pins->unattach_thread();
     delete pins;
 }
 
 void
 BloadGreyboxModel (model_t model, const char* model_name)
 {
-
-    pins->attach_thread();
 
     // create the LTS type LTSmin will generate
     lts_type_t ltstype = lts_type_create();
@@ -190,7 +207,7 @@ BloadGreyboxModel (model_t model, const char* model_name)
     
     // Sets the B Transition group to just one with read/write access
     dm_create(p_dm_info, 1,
-              pins->get_variable_count());
+               pins->get_variable_count());
 
     for (size_t i = 0; i < pins->get_variable_count(); i++) {
         dm_set (p_dm_info, 0, i);
