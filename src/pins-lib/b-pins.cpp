@@ -62,7 +62,7 @@ namespace ltsmin {
         void load_machine(const char* machine)
         {
             attach_thread();
-            b->load_b_machine(machine);   
+            b->load_b_machine(machine);
             unattach_thread();
         }
 
@@ -130,19 +130,9 @@ ltsmin::pins *pins = new ltsmin::pins();
 void
 BinitGreybox (model_t model, const char* model_name)
 {
-    Warning(info,"B init");
-
-    char abs_filename[PATH_MAX];
-    char* ret_filename = realpath (model_name, abs_filename);
-    
-    // check file exists
-    struct stat st;
-    if (stat(ret_filename, &st) != 0)
-        Abort ("File does not exist: %s", ret_filename);
-
-    pins->load_machine(ret_filename);
-
-    (void)model;
+    // Nothing to be done. 
+    // Issue with shared GBloadFile in sym checker not using shared. 
+    // Therefore initGreybox does not get run. Moving to loadGreyboxModel
 }
 
 static int
@@ -181,6 +171,17 @@ Bexit ()
 void
 BloadGreyboxModel (model_t model, const char* model_name)
 {
+    Warning(info,"B init");
+
+    char abs_filename[PATH_MAX];
+    char* ret_filename = realpath (model_name, abs_filename);
+    
+    // check file exists
+    struct stat st;
+    if (stat(ret_filename, &st) != 0)
+        Abort ("File does not exist: %s", ret_filename);
+
+    pins->load_machine(ret_filename);
 
     // create the LTS type LTSmin will generate
     lts_type_t ltstype = lts_type_create();
