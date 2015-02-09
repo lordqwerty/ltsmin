@@ -97,7 +97,7 @@ static void segv_setup(){
 
 void HREinitFeedback(){
     if (hre_debug->index==NULL) hre_debug->index=SIcreate();
-    segv_setup();
+    //segv_setup();
 }
 
 void popt_callback(
