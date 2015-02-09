@@ -61,35 +61,22 @@ namespace ltsmin {
 
         void load_machine(const char* machine)
         {
-            attach_thread();
             b->load_b_machine(machine);
-            unattach_thread();
         }
 
         int get_variable_count() 
         {
-            attach_thread();
-            int varCount = b->get_variable_count();
-            unattach_thread();
-            return varCount;
+            return b->get_variable_count();
         }
 
         int* get_initial_state() 
         {
-            attach_thread();
-            int* init = b->get_initial_state();
-            unattach_thread();
-
-            return init;
+            return b->get_initial_state();
         }
 
         int* get_next_state_long(int* id, TransitionCB cb)
         {
-            attach_thread();
-            int* next = b->get_next_state_long(id);
-            unattach_thread();
-
-            return next;
+            return b->get_next_state_long(id);
         }     
     };
 };
@@ -172,6 +159,9 @@ void
 BloadGreyboxModel (model_t model, const char* model_name)
 {
     Warning(info,"B init");
+
+    // Attaches LTSmin C thread to JNI Wrapper
+    pins->attach_thread();
 
     char abs_filename[PATH_MAX];
     char* ret_filename = realpath (model_name, abs_filename);
