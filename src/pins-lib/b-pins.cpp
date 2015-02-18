@@ -125,15 +125,15 @@ BinitGreybox (model_t model, const char* model_name)
 static int
 BgetTransitionsLong (model_t model, int group, int *src, TransitionCB cb, void *ctx)
 {
-    int dst[pins->get_variable_count()]; // next state values
+    // int dst[pins->get_variable_count()]; // next state values
 
-    int action[1];  
-    transition_info_t transition_info = {action, group};
+    // int action[1];  
+    // transition_info_t transition_info = {action, group};
 
     
-    pins->get_next_state_long(src, cb);
+    // pins->get_next_state_long(src, cb);
 
-    return 1;
+    return 0;
 }
 
 static int
@@ -151,7 +151,6 @@ BtransitionInGroup (model_t model, int* labels, int group)
 void
 Bexit ()
 {
-    pins->unattach_thread();
     delete pins;
 }
 
@@ -176,40 +175,60 @@ BloadGreyboxModel (model_t model, const char* model_name)
     // create the LTS type LTSmin will generate
     lts_type_t ltstype = lts_type_create();
 
+    int var_count = pins->get_variable_count();
+
     // set the length of the state
-    lts_type_set_state_length(ltstype, pins->get_variable_count());
+    lts_type_set_state_length(ltstype, var_count);
 
     // add an "int" type for a state slot
     int int_type = lts_type_add_type(ltstype, "int", NULL);
     lts_type_set_format (ltstype, int_type, LTStypeDirect);
 
+    // set state name & type
+    for (size_t i = 0; i < var_count; i++) {
+       char buf[200];
+       snprintf(buf, 200, "%d", i);
+       lts_type_set_state_name(ltstype, i, buf);
+       lts_type_set_state_typeno(ltstype, i, int_type);
+    }
+
+    printf("%s", "Out of for loop\n");
+
     // edge label types
-    lts_type_set_edge_label_count (ltstype, 0);
+    // lts_type_set_edge_label_count (ltstype, 1);
 
     // done with ltstype
     lts_type_validate(ltstype);
+    printf("%s", "LTSType validated\n");
 
     // make sure to set the lts-type before anything else in the GB
     GBsetLTStype(model, ltstype);
+    printf("%s", "LTSType Set\n");
 
     GBsetContext(model, pins);
+    printf("%s", "Context Set \n");
 
     matrix_t *p_dm_info       = new matrix_t;
     
     // Sets the B Transition group to just one with read/write access
-    dm_create(p_dm_info, 1,
-               pins->get_variable_count());
+    dm_create(p_dm_info, 1, var_count);
+    printf("%s", "Matrix made\n");
 
-    for (size_t i = 0; i < pins->get_variable_count(); i++) {
+    for (size_t i = 0; i < var_count; i++) {
         dm_set (p_dm_info, 0, i);
     }
+    printf("%s", "Matrix set\n");
 
     GBsetDMInfo (model, p_dm_info);
+    printf("%s", "DM Info set\n");
 
     GBsetInitialState(model, pins->get_initial_state());
+    printf("%s", "Set initial state\n");
 
     GBsetNextStateLong (model, BgetTransitionsLong);
     GBsetNextStateAll (model, BgetTransitionsAll);
+
+    pins->unattach_thread();
 
     atexit(Bexit);
 }
