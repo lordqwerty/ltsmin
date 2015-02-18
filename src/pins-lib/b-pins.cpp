@@ -196,7 +196,7 @@ BloadGreyboxModel (model_t model, const char* model_name)
     printf("%s", "Out of for loop\n");
 
     // edge label types
-    // lts_type_set_edge_label_count (ltstype, 1);
+    lts_type_set_edge_label_count (ltstype, 0);
 
     // done with ltstype
     lts_type_validate(ltstype);
