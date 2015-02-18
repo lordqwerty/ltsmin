@@ -74,7 +74,7 @@ namespace ltsmin {
             return b->get_initial_state();
         }
 
-        int* get_next_state_long(int* id, TransitionCB cb)
+        int* get_next_state_long(int id, TransitionCB cb)
         {
             return b->get_next_state_long(id);
         }     
@@ -151,6 +151,7 @@ BtransitionInGroup (model_t model, int* labels, int group)
 void
 Bexit ()
 {
+    pins->unattach_thread();
     delete pins;
 }
 
@@ -226,9 +227,10 @@ BloadGreyboxModel (model_t model, const char* model_name)
     printf("%s", "Set initial state\n");
 
     GBsetNextStateLong (model, BgetTransitionsLong);
-    GBsetNextStateAll (model, BgetTransitionsAll);
+    printf("%s", "Called BgetTransitionsLong\n");
 
-    pins->unattach_thread();
+    GBsetNextStateAll (model, BgetTransitionsAll);
+    printf("%s", "Called BgetTransitionsAll\n");
 
     atexit(Bexit);
 }
