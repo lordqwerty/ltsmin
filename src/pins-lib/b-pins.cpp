@@ -69,6 +69,11 @@ namespace ltsmin {
             return b->get_variable_count();
         }
 
+        int get_operation_count()
+        {
+            return b->get_operation_count();
+        }
+
         int* get_initial_state() 
         {
             return b->get_initial_state();
