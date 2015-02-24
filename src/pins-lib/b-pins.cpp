@@ -198,44 +198,30 @@ BloadGreyboxModel (model_t model, const char* model_name)
        lts_type_set_state_typeno(ltstype, i, int_type);
     }
 
-    printf("%s", "Out of for loop\n");
-
     // edge label types
     lts_type_set_edge_label_count (ltstype, 0);
 
     // done with ltstype
     lts_type_validate(ltstype);
-    printf("%s", "LTSType validated\n");
 
     // make sure to set the lts-type before anything else in the GB
     GBsetLTStype(model, ltstype);
-    printf("%s", "LTSType Set\n");
 
     GBsetContext(model, pins);
-    printf("%s", "Context Set \n");
 
     matrix_t *p_dm_info       = new matrix_t;
     
     // Sets the B Transition group to just one with read/write access
-    dm_create(p_dm_info, 1, var_count);
-    printf("%s", "Matrix made\n");
+    dm_create(p_dm_info, pins->get_operation_count(), var_count);
 
     for (size_t i = 0; i < var_count; i++) {
         dm_set (p_dm_info, 0, i);
     }
-    printf("%s", "Matrix set\n");
 
     GBsetDMInfo (model, p_dm_info);
-    printf("%s", "DM Info set\n");
-
     GBsetInitialState(model, pins->get_initial_state());
-    printf("%s", "Set initial state\n");
-
     GBsetNextStateLong (model, BgetTransitionsLong);
-    printf("%s", "Called BgetTransitionsLong\n");
-
     GBsetNextStateAll (model, BgetTransitionsAll);
-    printf("%s", "Called BgetTransitionsAll\n");
 
     atexit(Bexit);
 }
