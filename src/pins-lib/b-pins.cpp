@@ -130,21 +130,19 @@ BinitGreybox (model_t model, const char* model_name)
 static int
 BgetTransitionsLong (model_t model, int group, int *src, TransitionCB cb, void *ctx)
 {
-    // int dst[pins->get_variable_count()]; // next state values
+    int length;
+    int** destinations = pins->get_next_state_long(src, &length);
 
-    // int action[1];  
-    // transition_info_t transition_info = {action, group};
+    for(int i = 0; i < length; i++)
+    {
+        transition_info_t transition_info;
+        transition_info[0] = destinations[i][1];
+        transition_info[1] = 0;
 
-    
-    // pins->get_next_state_long(src, cb);
+        cb(ctx, transition_info, destinations[i][0], NULL);
+    }
 
-    return 0;
-}
-
-static int
-BgetTransitionsAll (model_t model, int* src, TransitionCB cb, void *ctx)
-{
-    return 0;
+    return length;
 }
 
 static int
@@ -181,25 +179,21 @@ BloadGreyboxModel (model_t model, const char* model_name)
     // create the LTS type LTSmin will generate
     lts_type_t ltstype = lts_type_create();
 
-    int var_count = pins->get_variable_count();
+    int var_count = 1;
 
     // set the length of the state
     lts_type_set_state_length(ltstype, var_count);
 
-    // add an "int" type for a state slot
-    int int_type = lts_type_add_type(ltstype, "int", NULL);
-    lts_type_set_format (ltstype, int_type, LTStypeDirect);
+    // add an "StateId" type for a state slot
+    int state_id_type = lts_type_add_type(ltstype, "StateId", NULL);
+    lts_type_set_format (ltstype, state_id_type, LTStypeDirect);
 
     // set state name & type
-    for (size_t i = 0; i < var_count; i++) {
-       char buf[200];
-       snprintf(buf, 200, "%d", i);
-       lts_type_set_state_name(ltstype, i, buf);
-       lts_type_set_state_typeno(ltstype, i, int_type);
-    }
+    lts_type_set_state_name(ltstype, 0, "StateId");
+    lts_type_set_state_typeno(ltstype, 0, state_id_type);
 
     // edge label types
-    lts_type_set_edge_label_count (ltstype, 0);
+    lts_type_set_edge_label_count (ltstype, 1);
 
     // done with ltstype
     lts_type_validate(ltstype);
@@ -212,11 +206,10 @@ BloadGreyboxModel (model_t model, const char* model_name)
     matrix_t *p_dm_info       = new matrix_t;
     
     // Sets the B Transition group to just one with read/write access
-    dm_create(p_dm_info, pins->get_operation_count(), var_count);
+    dm_create(p_dm_info, 1, var_count);
 
-    for (size_t i = 0; i < var_count; i++) {
-        dm_set (p_dm_info, 0, i);
-    }
+    dm_set (p_dm_info, 0, 0);
+
 
     GBsetDMInfo (model, p_dm_info);
     GBsetInitialState(model, pins->get_initial_state());
