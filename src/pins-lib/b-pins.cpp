@@ -69,6 +69,11 @@ namespace ltsmin {
             return b->get_variable_count();
         }
 
+        char** get_operation_names(int* length) 
+        {
+            return b->get_operation_names(length);
+        }
+
         int get_operation_count()
         {
             return b->get_operation_count();
@@ -79,9 +84,9 @@ namespace ltsmin {
             return b->get_initial_state();
         }
 
-        int* get_next_state_long(int id, TransitionCB cb)
+        int** get_next_state_long(int id, int* length)
         {
-            return b->get_next_state_long(id);
+            return b->get_next_state_long(id, length);
         }     
     };
 };
@@ -131,15 +136,12 @@ static int
 BgetTransitionsLong (model_t model, int group, int *src, TransitionCB cb, void *ctx)
 {
     int length;
-    int** destinations = pins->get_next_state_long(src, &length);
+    int** destinations = pins->get_next_state_long(src[0], &length);
 
     for(int i = 0; i < length; i++)
     {
-        transition_info_t transition_info;
-        transition_info[0] = destinations[i][1];
-        transition_info[1] = 0;
-
-        cb(ctx, transition_info, destinations[i][0], NULL);
+        transition_info_t transition_info = { &destinations[i][1], 0 };
+        cb(ctx, &transition_info, &destinations[i][0], NULL);
     }
 
     return length;
@@ -192,14 +194,30 @@ BloadGreyboxModel (model_t model, const char* model_name)
     lts_type_set_state_name(ltstype, 0, "StateId");
     lts_type_set_state_typeno(ltstype, 0, state_id_type);
 
+    // add an "action" type for edge labels
+    int operation_type = lts_type_add_type(ltstype, "Operation", NULL);
+    lts_type_set_format (ltstype, operation_type, LTStypeEnum);
+
     // edge label types
-    lts_type_set_edge_label_count (ltstype, 1);
+    lts_type_set_edge_label_count(ltstype, 1);
+    lts_type_set_edge_label_name(ltstype, 0, "Operation");
+    lts_type_set_edge_label_type(ltstype, 0, "Operation");
+    lts_type_set_edge_label_typeno(ltstype, 0, operation_type);
 
     // done with ltstype
     lts_type_validate(ltstype);
 
     // make sure to set the lts-type before anything else in the GB
     GBsetLTStype(model, ltstype);
+
+    int pl;
+    char** operations = pins->get_operation_names(&pl);
+
+    for(int i = 0; i < pl; i++)
+    {
+        GBchunkPut(model, operation_type, chunk_str(operations[i]));
+    }
+
 
     GBsetContext(model, pins);
 
@@ -214,7 +232,6 @@ BloadGreyboxModel (model_t model, const char* model_name)
     GBsetDMInfo (model, p_dm_info);
     GBsetInitialState(model, pins->get_initial_state());
     GBsetNextStateLong (model, BgetTransitionsLong);
-    GBsetNextStateAll (model, BgetTransitionsAll);
 
     atexit(Bexit);
 }
