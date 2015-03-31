@@ -147,12 +147,6 @@ BgetTransitionsLong (model_t model, int group, int *src, TransitionCB cb, void *
     return length;
 }
 
-static int
-BtransitionInGroup (model_t model, int* labels, int group)
-{
-    return 0;
-}
-
 void
 Bexit ()
 {
