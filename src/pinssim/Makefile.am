@@ -37,9 +37,9 @@ endif
 #bin_PROGRAMS += pinssim-dve
 #endif
 
-if HAVE_SPINS
-bin_PROGRAMS += pinssim-prom
-endif
+#if HAVE_SPINS
+#bin_PROGRAMS += pinssim-prom
+#endif
 
 if HAVE_SYLVAN
 SYM_CPP_FLAGS += $(SYLVAN_CPPFLAGS)
