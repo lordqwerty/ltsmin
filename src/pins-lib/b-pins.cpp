@@ -175,6 +175,7 @@ BloadGreyboxModel (model_t model, const char* model_name)
     // create the LTS type LTSmin will generate
     lts_type_t ltstype = lts_type_create();
 
+    // Only one since we are dealing with StateId in ProB
     int var_count = 1;
 
     // set the length of the state
@@ -188,7 +189,7 @@ BloadGreyboxModel (model_t model, const char* model_name)
     lts_type_set_state_name(ltstype, 0, "StateId");
     lts_type_set_state_typeno(ltstype, 0, state_id_type);
 
-    // add an "action" type for edge labels
+    // add an "Operation" type for edge labels
     int operation_type = lts_type_add_type(ltstype, "Operation", NULL);
     lts_type_set_format (ltstype, operation_type, LTStypeEnum);
 
@@ -204,14 +205,16 @@ BloadGreyboxModel (model_t model, const char* model_name)
     // make sure to set the lts-type before anything else in the GB
     GBsetLTStype(model, ltstype);
 
+    // Memory to store length of operations array
     int pl;
+
+    // Char* array of names of each operation in a machine. pl passed for arr length
     char** operations = pins->get_operation_names(&pl);
 
     for(int i = 0; i < pl; i++)
     {
         GBchunkPut(model, operation_type, chunk_str(operations[i]));
     }
-
 
     GBsetContext(model, pins);
 
@@ -222,7 +225,15 @@ BloadGreyboxModel (model_t model, const char* model_name)
 
     dm_set (p_dm_info, 0, 0);
 
+    int num_state_labels = 0;
+    matrix_t *sl_info = new matrix_t;
+    dm_create(sl_info, num_state_labels, 1);
+    for (int i = 0; i < num_state_labels; i++) 
+    {
+        dm_set(sl_info, i, i);
+    }
 
+    GBsetStateLabelInfo(model, sl_info);
     GBsetDMInfo (model, p_dm_info);
     GBsetInitialState(model, pins->get_initial_state());
     GBsetNextStateLong (model, BgetTransitionsLong);
