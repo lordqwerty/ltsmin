@@ -42,6 +42,10 @@ if HAVE_OPAAL
 bin_PROGRAMS += opaal2lts-mc
 endif
 
+if HAVE_PROB
+bin_PROGRAMS += b2lts-mc
+endif
+
 mc_sources  = pins2lts-mc.c
 
 # etf2lts-mc
@@ -100,3 +104,12 @@ opaal2lts_mc_SOURCES   = $(mc_sources)
 opaal2lts_mc_SOURCES  += ../pins-lib/opaal-pins.c ../pins-lib/opaal-pins.h
 opaal2lts_mc_LDADD     = $(MC_LIBS) $(OPAAL_LDFLAGS) 
 opaal2lts_mc_CPPFLAGS  = -DOPAAL $(MC_CPPFLAGS)
+
+# b2lts-seq
+b2lts_mc_SOURCES  = $(mc_sources)
+b2lts_mc_SOURCES += ../pins-lib/b-pins.cpp ../pins-lib/b-pins.h
+b2lts_mc_LDADD    = $(HRE_LIB) $(PINS_LIBS)
+b2lts_mc_LDADD   += $(MC_LIBS) $(PROB_LIBS)
+b2lts_mc_CPPFLAGS = -DPROB $(PROB_CPPFLAGS) $(MC_CPPFLAGS) -I$(JAVA_HOME)/include -I$(JAVA_HOME)/include/linux -ljvm
+b2lts_mc_LDFLAGS  = $(PROB_LDFLAGS) $(AM_LDFLAGS)
+nodist_EXTRA_b2lts_mc_SOURCES = automake-force-linker.cxx # req. by vset
