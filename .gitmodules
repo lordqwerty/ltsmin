@@ -13,3 +13,6 @@
 [submodule "scoop"]
 	path = scoop
 	url = https://github.com/utwente-fmt/scoop.git
+[submodule "prob_link_library"]
+	path = prob_link_library
+	url = git@github.com:lordqwerty/prob_link_library.git
