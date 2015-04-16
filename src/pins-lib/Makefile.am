@@ -57,7 +57,7 @@ libmcrl2_pins_la_LDFLAGS  = $(MCRL2_PINS_LDFLAGS) $(MCRL2_LDFLAGS) $(AM_LDFLAGS)
 libmcrl2_pins_la_LIBADD   = $(MCRL2_PINS_LIBS) $(LIBS)
 
 # libprob-pins.la
-libprob_pins_la_SOURCES  = prob-pins.cpp prob-pins.h
+libprob_pins_la_SOURCES  = prob-pins.c prob-pins.h
 libprob_pins_la_CPPFLAGS = -DPROB -DNDEBUG $(PROB_PINS_CPPFLAGS) $(AM_CPPFLAGS)
 libprob_pins_la_CXXFLAGS = $(PROB_PINS_CXXFLAGS) $(AM_CXXFLAGS)
 libprob_pins_la_LDFLAGS  = $(PROB_PINS_LDFLAGS) $(PROB_LDFLAGS) $(AM_LDFLAGS)

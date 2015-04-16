@@ -1,50 +1,60 @@
-// System Headers
 #include <hre/config.h>
 
-// External Dependencies
-#include <algorithm>
-#include <iterator>
-#include <iostream>
-#include <memory>
-#include <set>
-#include <stack>
-#include <string>
-#include <vector>
-
-extern "C" {
-#include <popt.h>
-#include <sys/stat.h>
-#include <dm/dm.h>
-#include <hre/unix.h>
-#include <hre/user.h>
+#include <dlfcn.h>
 #include <limits.h>
 #include <stdlib.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
-// LTSmin Headers
-#include <pins-lib/prob-pins.h>
+#include <dm/dm.h>
+#include <hre/runtime.h>
+#include <hre/unix.h>
 #include <ltsmin-lib/ltsmin-standard.h>
+#include <pins-lib/prob-pins.h>
+#include <util-lib/chunk_support.h>
+#include <util-lib/util.h>
 
 #include "../../prob_link_library/include/pins.h"
-}
 
-namespace ltsmin {
+static void
+prob_popt (poptContext con,
+             enum poptCallbackReason reason,
+             const struct poptOption *opt,
+             const char *arg, void *data);
 
-    class pins {
+void ProBinitGreybox (model_t model, const char* model_name);
+void ProBloadGreyboxModel (model_t model, const char* model_name);
+static int ProBgetTransitionsLong (model_t model, int group, int *src, TransitionCB cb, void *ctx);
 
-    public:
+/* Next-state functions */
+next_method_grey_t  prob_get_successor;
+next_method_grey_t  prob_get_actions;
+next_method_black_t prob_get_successor_all;
+void        (*prob_get_initial_state)(int *to);
 
-        void something()
-        {
-            init();
-        }
+/* PINS dependency matrix info */
+int         (*prob_get_state_size)();
+int         (*prob_get_transition_groups)();
+const int*  (*prob_get_actions_read_dependencies)(int t);
+const int*  (*prob_get_transition_read_dependencies)(int t);
+const int*  (*prob_get_transition_may_write_dependencies)(int t);
+const int*  (*prob_get_transition_must_write_dependencies)(int t);
 
-        int* get_initial_state()
-        {
-            int foo = 1;
-            return &foo;
-        }
-    };
-};
+/* PINS state type/value info */
+const char* (*prob_get_state_variable_name)(int var);
+int         (*prob_get_state_variable_type)(int var);
+const char* (*prob_get_type_name)(int type);
+int         (*prob_get_type_count)();
+const char* (*prob_get_type_value_name)(int type, int value);
+int         (*prob_get_type_value_count)(int type);
+
+/* PINS flexible matrices */
+const int*  (*prob_get_matrix)(int m, int x);
+int         (*prob_get_matrix_count)();
+const char* (*prob_get_matrix_name)(int m);
+int         (*prob_get_matrix_row_count)(int m);
+int         (*prob_get_matrix_col_count)(int m);
 
 static void
 prob_popt (poptContext con,
@@ -75,16 +85,22 @@ struct poptOption prob_options[]= {
     POPT_TABLEEND
 };
 
-extern "C" {
-
-ltsmin::pins *pins = new ltsmin::pins();
+typedef struct grey_box_context {
+    int todo;
+} *gb_context_t;
 
 void
 ProBinitGreybox (model_t model, const char* model_name)
 {
-    // Nothing to be done. 
-    // Issue with shared GBloadFile in sym checker not using shared. 
-    // Therefore initGreybox does not get run. Moving to loadGreyboxModel
+    Warning(info,"B init");
+
+    char abs_filename[PATH_MAX];
+    char* ret_filename = realpath (model_name, abs_filename);
+    
+    // check file exists
+    struct stat st;
+    if (stat(ret_filename, &st) != 0)
+        Abort ("File does not exist: %s", ret_filename);
 }
 
 static int
@@ -94,30 +110,11 @@ ProBgetTransitionsLong (model_t model, int group, int *src, TransitionCB cb, voi
 }
 
 void
-Bexit ()
-{
-    delete pins;
-}
-
-void
 ProBloadGreyboxModel (model_t model, const char* model_name)
 {
-    Warning(info,"B init");
-
-    pins->something();
-
-    char abs_filename[PATH_MAX];
-    char* ret_filename = realpath (model_name, abs_filename);
-    
-    // check file exists
-    struct stat st;
-    if (stat(ret_filename, &st) != 0)
-        Abort ("File does not exist: %s", ret_filename);
-
     // create the LTS type LTSmin will generate
     lts_type_t ltstype = lts_type_create();
 
-    // Only one since we are dealing with StateId in ProB
     int var_count = 1;
 
     // set the length of the state
@@ -152,9 +149,10 @@ ProBloadGreyboxModel (model_t model, const char* model_name)
         GBchunkPut(model, operation_type, chunk_str("operations[i]"));
     }
 
-    GBsetContext(model, pins);
+    gb_context_t ctx=(gb_context_t)RTmalloc(sizeof(struct grey_box_context));
+    GBsetContext(model, ctx);
 
-    matrix_t *p_dm_info       = new matrix_t;
+    matrix_t *p_dm_info = RTmalloc (sizeof *p_dm_info);
     
     // Sets the B Transition group to just one with read/write access
     dm_create(p_dm_info, 1, var_count);
@@ -162,20 +160,17 @@ ProBloadGreyboxModel (model_t model, const char* model_name)
     dm_set (p_dm_info, 0, 0);
 
     int num_state_labels = 0;
-    matrix_t *sl_info = new matrix_t;
+    matrix_t *sl_info = RTmalloc (sizeof *sl_info);;
     dm_create(sl_info, num_state_labels, 1);
     for (int i = 0; i < num_state_labels; i++) 
     {
         dm_set(sl_info, i, i);
     }
 
+    int *foo = 1;
+
     GBsetStateLabelInfo(model, sl_info);
     GBsetDMInfo (model, p_dm_info);
-    GBsetInitialState(model, pins->get_initial_state());
+    GBsetInitialState(model, &foo);
     GBsetNextStateLong (model, ProBgetTransitionsLong);
-
-
-    atexit(Bexit);
-}
-
 }
