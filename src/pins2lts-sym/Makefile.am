@@ -43,6 +43,10 @@ if HAVE_SYLVAN
 SYM_CPP_FLAGS += $(SYLVAN_CPPFLAGS)
 endif
 
+if HAVE_LIBPROB
+bin_PROGRAMS += prob2lts-sym
+endif
+
 # etf2lts-sym
 etf2lts_sym_SOURCES   = pins2lts-sym.c
 etf2lts_sym_SOURCES  += ../pins-lib/etf-pins.c ../pins-lib/etf-pins.h
@@ -112,3 +116,12 @@ prom2lts_sym_LDADD   += $(VSET_LIBS) $(SPINS_LIBS)
 prom2lts_sym_CPPFLAGS = -DSPINS $(SPINS_CPPFLAGS) $(SYM_CPP_FLAGS)
 prom2lts_sym_LDFLAGS  = $(SPINS_LDFLAGS) $(SYM_LD_FLAGS)
 nodist_EXTRA_prom2lts_sym_SOURCES = automake-force-linker.cxx # req. by vset
+
+# prob2lts-sym
+prob2lts_sym_SOURCES   = pins2lts-sym.c
+prob2lts_sym_LDADD     = $(PINS_LIBS)
+prob2lts_sym_LDADD    += ../pins-lib/libprob-pins.la
+prob2lts_sym_LDADD    += $(VSET_LIBS) $(prob_LIBS)
+prob2lts_sym_CPPFLAGS  = -DPROB $(SYM_CPP_FLAGS)
+prob2lts_sym_LDFLAGS   = $(PROB_LDFLAGS) $(SYM_LD_FLAGS)
+nodist_EXTRA_prob2lts_sym_SOURCES = automake-force-linker.cxx # req. by mcrl2

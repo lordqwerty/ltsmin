@@ -378,6 +378,15 @@ if test "x$with_scoop" == xyes; then
     [have_scoop="yes"]
 fi
 
+AC_ARG_WITH([prob],[AS_HELP_STRING([--with-prob],[Compile ProB])],[],[
+    [with_prob=yes]
+])
+if test "x$with_prob" == xyes; then
+    AC_CONFIG_SUBDIRS([prob_link_library])
+    AC_DEFINE([HAVE_LIBPROB], [], [Defined if the ProB lib has been compiled.])
+    [have_prob="yes"]
+fi
+
 AM_CONDITIONAL([HAVE_POSIX], [test x"$POSIX_SHARED" = "xyes"])
 AM_CONDITIONAL([HAVE_SCOOP], [test x"$have_scoop" = "xyes"])
 AM_CONDITIONAL([HAVE_SYLVAN], [test x"$have_sylvan" = "xyes"])
@@ -394,6 +403,7 @@ AM_CONDITIONAL([HAVE_LIBMCRL2], [test x"$acx_mcrl2" = xyes])
 AM_CONDITIONAL([HAVE_LIBPBES], [test x"$acx_pbes" = xyes])
 AM_CONDITIONAL([HAVE_LIBSTEP_INFO], [test x"$have_libstep_info" = xyes])
 AM_CONDITIONAL([HAVE_LIBDDD], [test x"$acx_libddd" = xyes])
+AM_CONDITIONAL([HAVE_LIBPROB], [test x"$have_prob" = "xyes"])
 AM_CONDITIONAL([HAVE_ASCIIDOC], [test x"$ASCIIDOC" != x])
 AM_CONDITIONAL([HAVE_XMLTO], [test x"$XMLTO" != x])
 AM_CONDITIONAL([HAVE_LIBBCG], [test x"$have_bcg" = xyes])
@@ -484,6 +494,7 @@ Configuration:
     MPICXX   = ${MPICXX:-NOT FOUND, building without MPI support}
     OPAAL    = ${have_opaal:-TBB malloc NOT FOUND, building without opaal support}
     PBES     = ${acx_pbes:-NOT FOUND, building without PBES support}
+    PROB     = ${have_prob:-NOT FOUND, building without ProB support}
     SCOOP    = ${have_scoop:-NO, either scoop was disabled or ghc/happy could not be found}
     SPINS    = ${acx_spins:-NO, JDK or Ant not found (override with --with-spins)}
     SYLVAN   = ${have_sylvan:-NO, only on 64-bit systems (override with --with-sylvan)}

@@ -33,6 +33,10 @@ if HAVE_SPINS
 bin_PROGRAMS += prom2lts-seq
 endif
 
+if HAVE_LIBPROB
+bin_PROGRAMS += prob2lts-seq
+endif
+
 # pins2lts-seq
 pins2lts_seq_SOURCES   = pins2lts-seq.c
 pins2lts_seq_SOURCES  += ../pins-lib/dlopen-pins.c ../pins-lib/dlopen-pins.h
@@ -94,3 +98,11 @@ prom2lts_seq_LDADD   += $(VSET_LIBS) $(SPINS_LIBS)
 prom2lts_seq_CPPFLAGS = -DSPINS $(SPINS_CPPFLAGS) $(SEQ_CPPFLAGS)
 prom2lts_seq_LDFLAGS  = $(SPINS_LDFLAGS) $(AM_LDFLAGS)
 nodist_EXTRA_prom2lts_seq_SOURCES = automake-force-linker.cxx # req. by vset
+
+# prob2lts-seq
+prob2lts_seq_SOURCES   = pins2lts-seq.c
+prob2lts_seq_LDADD     = $(HRE_LIB) $(PINS_LIBS)
+prob2lts_seq_LDADD    += $(VSET_LIBS) ../pins-lib/libprob-pins.la
+prob2lts_seq_CPPFLAGS  = -DPROB $(SEQ_CPPFLAGS)
+prob2lts_seq_LDFLAGS   = $(PROB_LDFLAGS) $(AM_LDFLAGS)
+nodist_EXTRA_prob2lts_seq_SOURCES = automake-force-linker.cxx #req. by mcrl2s
