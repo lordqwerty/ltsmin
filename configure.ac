@@ -202,6 +202,10 @@ AC_SUBST([BUDDY_LIBS],['${top_builddir}/buddy/src/libbdd.la -lm'])
 AC_SUBST([BUDDY_CPPFLAGS],['-I${top_srcdir}/buddy/src'])
 AC_SUBST([BUDDY_LDFLAGS])
 
+AC_SUBST([PROB_LIBS],['${top_builddir}/prob_link_library/src/libprob.a -lm'])
+AC_SUBST([PROB_CPPFLAGS],['-I${top_srcdir}/prob_link_library/include/'])
+AC_SUBST([PROB_LDFLAGS])
+
 ACX_DDD([:],
   [AC_MSG_WARN([No libDDD installation found.])])
 

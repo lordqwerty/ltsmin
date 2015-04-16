@@ -23,6 +23,8 @@ extern "C" {
 // LTSmin Headers
 #include <pins-lib/prob-pins.h>
 #include <ltsmin-lib/ltsmin-standard.h>
+
+#include "../../prob_link_library/include/pins.h"
 }
 
 namespace ltsmin {
@@ -33,7 +35,13 @@ namespace ltsmin {
 
         void something()
         {
+            init();
+        }
 
+        int* get_initial_state()
+        {
+            int foo = 1;
+            return &foo;
         }
     };
 };
@@ -96,6 +104,8 @@ ProBloadGreyboxModel (model_t model, const char* model_name)
 {
     Warning(info,"B init");
 
+    pins->something();
+
     char abs_filename[PATH_MAX];
     char* ret_filename = realpath (model_name, abs_filename);
     
@@ -107,8 +117,63 @@ ProBloadGreyboxModel (model_t model, const char* model_name)
     // create the LTS type LTSmin will generate
     lts_type_t ltstype = lts_type_create();
 
-    //GBsetInitialState(model, pins->get_initial_state());
+    // Only one since we are dealing with StateId in ProB
+    int var_count = 1;
+
+    // set the length of the state
+    lts_type_set_state_length(ltstype, var_count);
+
+    // add an "StateId" type for a state slot
+    int state_id_type = lts_type_add_type(ltstype, "StateId", NULL);
+    lts_type_set_format (ltstype, state_id_type, LTStypeDirect);
+
+    // set state name & type
+    lts_type_set_state_name(ltstype, 0, "StateId");
+    lts_type_set_state_typeno(ltstype, 0, state_id_type);
+
+    // add an "Operation" type for edge labels
+    int operation_type = lts_type_add_type(ltstype, "Operation", NULL);
+    lts_type_set_format (ltstype, operation_type, LTStypeEnum);
+
+    // edge label types
+    lts_type_set_edge_label_count(ltstype, 1);
+    lts_type_set_edge_label_name(ltstype, 0, "Operation");
+    lts_type_set_edge_label_type(ltstype, 0, "Operation");
+    lts_type_set_edge_label_typeno(ltstype, 0, operation_type);
+
+    // done with ltstype
+    lts_type_validate(ltstype);
+
+    // make sure to set the lts-type before anything else in the GB
+    GBsetLTStype(model, ltstype);
+
+    for(int i = 0; i < 1; i++)
+    {
+        GBchunkPut(model, operation_type, chunk_str("operations[i]"));
+    }
+
+    GBsetContext(model, pins);
+
+    matrix_t *p_dm_info       = new matrix_t;
+    
+    // Sets the B Transition group to just one with read/write access
+    dm_create(p_dm_info, 1, var_count);
+
+    dm_set (p_dm_info, 0, 0);
+
+    int num_state_labels = 0;
+    matrix_t *sl_info = new matrix_t;
+    dm_create(sl_info, num_state_labels, 1);
+    for (int i = 0; i < num_state_labels; i++) 
+    {
+        dm_set(sl_info, i, i);
+    }
+
+    GBsetStateLabelInfo(model, sl_info);
+    GBsetDMInfo (model, p_dm_info);
+    GBsetInitialState(model, pins->get_initial_state());
     GBsetNextStateLong (model, ProBgetTransitionsLong);
+
 
     atexit(Bexit);
 }
