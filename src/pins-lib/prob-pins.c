@@ -173,4 +173,6 @@ ProBloadGreyboxModel (model_t model, const char* model_name)
     GBsetDMInfo (model, p_dm_info);
     GBsetInitialState(model, &foo);
     GBsetNextStateLong (model, ProBgetTransitionsLong);
+
+    start_prob();
 }
