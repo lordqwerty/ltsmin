@@ -15,7 +15,7 @@
 #include <util-lib/chunk_support.h>
 #include <util-lib/util.h>
 
-#include "../../prob_link_library/include/pins.h"
+#include "../../prob_link_library/src/pins.h"
 
 static void
 prob_popt (poptContext con,
