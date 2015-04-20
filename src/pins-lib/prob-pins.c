@@ -15,10 +15,6 @@
 #include <util-lib/chunk_support.h>
 #include <util-lib/util.h>
 
-#include "../../prob_link_library/src/client.h"
-
-extern void connect_prob();
-
 static void
 prob_popt (poptContext con,
              enum poptCallbackReason reason,
@@ -103,6 +99,8 @@ ProBinitGreybox (model_t model, const char* model_name)
     struct stat st;
     if (stat(ret_filename, &st) != 0)
         Abort ("File does not exist: %s", ret_filename);
+
+    start_prob();
 }
 
 static int
@@ -175,6 +173,4 @@ ProBloadGreyboxModel (model_t model, const char* model_name)
     GBsetDMInfo (model, p_dm_info);
     GBsetInitialState(model, &foo);
     GBsetNextStateLong (model, ProBgetTransitionsLong);
-
-    connect_prob();
 }

@@ -4,6 +4,12 @@
 #include <popt.h>
 #include <pins-lib/pins.h>
 
+#include "../../prob_link_library/src/pins.h"
+
+// ProB Link Prototypes
+extern void start_prob();
+extern void stop_prob();
+
 extern struct poptOption prob_options[];
 
 #endif
