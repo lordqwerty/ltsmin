@@ -20,10 +20,6 @@ if HAVE_LIBMCRL2
 noinst_LTLIBRARIES += libmcrl2-pins.la
 endif
 
-if HAVE_LIBPROB
-noinst_LTLIBRARIES += libprob-pins.la
-endif
-
 if HAVE_SCOOP
 noinst_LTLIBRARIES += libmapa-pins.la
 endif
@@ -55,13 +51,6 @@ libmcrl2_pins_la_CPPFLAGS = -DMCRL2 -DNDEBUG $(MCRL2_PINS_CPPFLAGS) $(AM_CPPFLAG
 libmcrl2_pins_la_CXXFLAGS = $(MCRL2_PINS_CXXFLAGS) $(AM_CXXFLAGS)
 libmcrl2_pins_la_LDFLAGS  = $(MCRL2_PINS_LDFLAGS) $(MCRL2_LDFLAGS) $(AM_LDFLAGS)
 libmcrl2_pins_la_LIBADD   = $(MCRL2_PINS_LIBS) $(LIBS)
-
-# libprob-pins.la
-libprob_pins_la_SOURCES  = prob-pins.c prob-pins.h
-libprob_pins_la_CPPFLAGS = -DPROB -DNDEBUG $(PROB_PINS_CPPFLAGS) $(AM_CPPFLAGS)
-libprob_pins_la_CXXFLAGS = $(PROB_PINS_CXXFLAGS) $(AM_CXXFLAGS)
-libprob_pins_la_LDFLAGS  = $(PROB_PINS_LDFLAGS) $(PROB_LDFLAGS) $(AM_LDFLAGS)
-libprob_pins_la_LIBADD   = $(PROB_PINS_LIBS) $(LIBS)
 
 # libpbes-pins
 libpbes_pins_la_SOURCES   = pbes-pins.cpp pbes-pins.h

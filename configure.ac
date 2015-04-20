@@ -202,7 +202,7 @@ AC_SUBST([BUDDY_LIBS],['${top_builddir}/buddy/src/libbdd.la -lm'])
 AC_SUBST([BUDDY_CPPFLAGS],['-I${top_srcdir}/buddy/src'])
 AC_SUBST([BUDDY_LDFLAGS])
 
-AC_SUBST([PROB_LIBS],['-L${top_builddir}/prob_link_library -lprob'])
+AC_SUBST([PROB_LIBS],['-L${top_builddir}/prob_link_library/ -lzmq -lprob'])
 AC_SUBST([PROB_CPPFLAGS],['-I${top_srcdir}/prob_link_library/src'])
 AC_SUBST([PROB_LDFLAGS],[''])
 
@@ -390,7 +390,6 @@ AC_ARG_WITH([prob],[AS_HELP_STRING([--with-prob],[Compile ProB])],[],[
     [with_prob=yes]
 ])
 if test "x$with_prob" == xyes; then
-    AC_CONFIG_SUBDIRS([prob_link_library])
     AC_DEFINE([HAVE_LIBPROB], [], [Defined if the ProB lib has been compiled.])
     [have_prob="yes"]
 fi

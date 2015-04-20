@@ -100,9 +100,10 @@ prom2lts_seq_LDFLAGS  = $(SPINS_LDFLAGS) $(AM_LDFLAGS)
 nodist_EXTRA_prom2lts_seq_SOURCES = automake-force-linker.cxx # req. by vset
 
 # prob2lts-seq
-prob2lts_seq_SOURCES   = pins2lts-seq.c
-prob2lts_seq_LDADD     = $(HRE_LIB) $(PINS_LIBS)
-prob2lts_seq_LDADD    += $(VSET_LIBS) $(PROB_LIBS)
-prob2lts_seq_CPPFLAGS  = -DPROB $(SEQ_CPPFLAGS)
-prob2lts_seq_LDFLAGS   = $(PROB_LDFLAGS) $(AM_LDFLAGS)
-nodist_EXTRA_prob2lts_seq_SOURCES = automake-force-linker.cxx #req. by prob
+prob2lts_seq_SOURCES  = pins2lts-seq.c
+prob2lts_seq_SOURCES += ../pins-lib/prob-pins.c ../pins-lib/prob-pins.h
+prob2lts_seq_LDADD    = $(HRE_LIB) $(PINS_LIBS)
+prob2lts_seq_LDADD   += $(VSET_LIBS) $(PROB_LIBS)
+prob2lts_seq_CPPFLAGS = -DSPINS $(PROB_CPPFLAGS) $(SEQ_CPPFLAGS)
+prob2lts_seq_LDFLAGS  = $(SPINS_LDFLAGS) $(AM_LDFLAGS)
+nodist_EXTRA_prom2lts_seq_SOURCES = automake-force-linker.cxx
