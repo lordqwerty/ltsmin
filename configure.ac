@@ -202,9 +202,9 @@ AC_SUBST([BUDDY_LIBS],['${top_builddir}/buddy/src/libbdd.la -lm'])
 AC_SUBST([BUDDY_CPPFLAGS],['-I${top_srcdir}/buddy/src'])
 AC_SUBST([BUDDY_LDFLAGS])
 
-AC_SUBST([PROB_LIBS],['${top_builddir}/prob_link_library/libprob.a -lm'])
-AC_SUBST([PROB_CPPFLAGS],['-I${top_builddir}/prob_link_library/include/'])
-AC_SUBST([PROB_LDFLAGS])
+AC_SUBST([PROB_LIBS],['-L${top_builddir}/prob_link_library -lprob'])
+AC_SUBST([PROB_CPPFLAGS],['-I${top_srcdir}/prob_link_library/src'])
+AC_SUBST([PROB_LDFLAGS],[''])
 
 ACX_DDD([:],
   [AC_MSG_WARN([No libDDD installation found.])])
@@ -280,6 +280,10 @@ AS_IF([test x"$have_libtommath" = xyes],
   [AC_CHECK_HEADERS([tommath.h],,[AC_MSG_FAILURE([tommath.h not found.])])])
 
 AC_CHECK_HEADER([popt.h],[], [AC_MSG_FAILURE([popt.h not found.])])
+
+# Checks for ZeroMQ being installed and on LD_PATH
+AC_CHECK_HEADER([zmq.h],[], [AC_MSG_FAILURE([zmq.h not found.])])
+AC_CHECK_HEADER([czmq.h],[], [AC_MSG_FAILURE([czmq.h not found.])])
 
 AC_CACHE_SAVE
 

@@ -123,5 +123,5 @@ prob2lts_sym_LDADD     = $(PINS_LIBS)
 prob2lts_sym_LDADD    += ../pins-lib/libprob-pins.la
 prob2lts_sym_LDADD    += $(VSET_LIBS) $(PROB_LIBS)
 prob2lts_sym_CPPFLAGS  = -DPROB $(SYM_CPP_FLAGS)
-prob2lts_sym_LDFLAGS   = $(PROB_LDFLAGS) $(SYM_LD_FLAGS)
-nodist_EXTRA_prob2lts_sym_SOURCES = automake-force-linker.cxx # req. by mcrl2
+prob2lts_sym_LDFLAGS   = $(PROB_LDFLAGS) -I${top_builddir}/prob_link_library/src $(SYM_LD_FLAGS)
+nodist_EXTRA_prob2lts_sym_SOURCES = automake-force-linker.cxx

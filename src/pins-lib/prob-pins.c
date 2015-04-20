@@ -15,7 +15,9 @@
 #include <util-lib/chunk_support.h>
 #include <util-lib/util.h>
 
-#include "../../prob_link_library/src/pins.h"
+#include "../../prob_link_library/src/client.h"
+
+extern void connect_prob();
 
 static void
 prob_popt (poptContext con,
@@ -174,5 +176,5 @@ ProBloadGreyboxModel (model_t model, const char* model_name)
     GBsetInitialState(model, &foo);
     GBsetNextStateLong (model, ProBgetTransitionsLong);
 
-    start_prob();
+    connect_prob();
 }
