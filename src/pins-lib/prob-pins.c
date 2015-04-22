@@ -54,6 +54,10 @@ const char* (*prob_get_matrix_name)(int m);
 int         (*prob_get_matrix_row_count)(int m);
 int         (*prob_get_matrix_col_count)(int m);
 
+/* State Conversion functions */
+chunk *convert_to_ltsmin_state(State* s);
+State *convert_to_prob_state(chunk* s);
+
 static void
 prob_popt (poptContext con,
              enum poptCallbackReason reason,
@@ -69,7 +73,7 @@ prob_popt (poptContext con,
         GBregisterPreLoader("mch", ProBinitGreybox);
         GBregisterLoader("mch", ProBloadGreyboxModel);
 
-        Warning(info,"B machine module initialized");
+        Warning(info,"ProB module initialized");
         return;
     case POPT_CALLBACK_REASON_OPTION:
         break;
@@ -99,16 +103,22 @@ ProBgetTransitionsLong (model_t model, int group, int *src, TransitionCB cb, voi
     return 0;
 }
 
-// state
-// convert_to_ltsmin_state(State* state)
+// chunk
+// *convert_to_ltsmin_state(State* s)
 // {
+//     state *ltsmin_state
 //     memcpy()
+
+//     return ltsmin_state;
 // }
 
 // State
-// convert_to_prob_state(state* state)
+// *convert_to_prob_state(chunk* s)
 // {
+//     State *prob_state
 //     memcpy()
+
+//     return prob_state;
 // }
 
 void
