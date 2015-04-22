@@ -125,5 +125,3 @@ prob2lts_sym_LDADD    += $(VSET_LIBS) $(PROB_LIBS)
 prob2lts_sym_CPPFLAGS  = -DPROB $(SYM_CPP_FLAGS)
 prob2lts_sym_LDFLAGS   = $(PROB_LDFLAGS) $(SYM_LD_FLAGS)
 nodist_EXTRA_prob2lts_sym_SOURCES = automake-force-linker.cxx
-
-# ${top_builddir}/prob_link_library/lib/64-bit/linux/libzmq.so.3 ${top_builddir}/prob_link_library/lib/64-bit/linux/libczmq.so.1 

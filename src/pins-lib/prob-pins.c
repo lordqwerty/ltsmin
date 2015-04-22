@@ -90,7 +90,31 @@ typedef struct grey_box_context {
 void
 ProBinitGreybox (model_t model, const char* model_name)
 {
-    Warning(info,"B init");
+    // Not called by LTSmin backend.
+}
+
+static int
+ProBgetTransitionsLong (model_t model, int group, int *src, TransitionCB cb, void *ctx)
+{
+    return 0;
+}
+
+// state
+// convert_to_ltsmin_state(State* state)
+// {
+//     memcpy()
+// }
+
+// State
+// convert_to_prob_state(state* state)
+// {
+//     memcpy()
+// }
+
+void
+ProBloadGreyboxModel (model_t model, const char* model_name)
+{
+    Warning(info,"ProB init");
 
     char abs_filename[PATH_MAX];
     char* ret_filename = realpath (model_name, abs_filename);
@@ -101,21 +125,13 @@ ProBinitGreybox (model_t model, const char* model_name)
         Abort ("File does not exist: %s", ret_filename);
 
     start_prob();
-}
 
-static int
-ProBgetTransitionsLong (model_t model, int group, int *src, TransitionCB cb, void *ctx)
-{
-    return 0;
-}
+    // Need to get init state so we can have var count
+    State *initState = get_init_state();
+    int var_count = prob_get_variable_count();
 
-void
-ProBloadGreyboxModel (model_t model, const char* model_name)
-{
     // create the LTS type LTSmin will generate
     lts_type_t ltstype = lts_type_create();
-
-    int var_count = 1;
 
     // set the length of the state
     lts_type_set_state_length(ltstype, var_count);
@@ -155,12 +171,12 @@ ProBloadGreyboxModel (model_t model, const char* model_name)
     matrix_t *p_dm_info = RTmalloc (sizeof *p_dm_info);
     
     // Sets the B Transition group to just one with read/write access
-    dm_create(p_dm_info, 1, var_count);
+    dm_create(p_dm_info, prob_get_transition_group_count(), var_count);
 
     dm_set (p_dm_info, 0, 0);
 
-    int num_state_labels = 0;
-    matrix_t *sl_info = RTmalloc (sizeof *sl_info);;
+    int num_state_labels = prob_get_state_label_count();
+    matrix_t *sl_info = RTmalloc (sizeof *sl_info);
     dm_create(sl_info, num_state_labels, 1);
     for (int i = 0; i < num_state_labels; i++) 
     {
