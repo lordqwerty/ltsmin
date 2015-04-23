@@ -137,6 +137,11 @@ ProBloadGreyboxModel (model_t model, const char* model_name)
         lts_type_set_format (ltstype, i, LTStypeChunk);
     }
     printf("LTSTYPE Format - LTSmin\n");
+
+    // set the length of the state
+    lts_type_set_state_length(ltstype, var_count);
+    printf("State Length - LTSmin\n");
+
     // set state name & type
     for (int i = 0; i < var_count; ++i) 
     {
@@ -144,10 +149,6 @@ ProBloadGreyboxModel (model_t model, const char* model_name)
         lts_type_set_state_typeno(ltstype, i, i);
     }
     printf("LTS State - LTSmin\n");
-
-    // set the length of the state
-    lts_type_set_state_length(ltstype, var_count);
-    printf("State Length - LTSmin\n");
 
     // add an "Operation" type for edge labels
     int operation_type = lts_type_add_type(ltstype, "Operation", NULL);
