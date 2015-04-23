@@ -55,7 +55,7 @@ int         (*prob_get_matrix_row_count)(int m);
 int         (*prob_get_matrix_col_count)(int m);
 
 /* State Conversion functions */
-chunk *convert_to_ltsmin_state(State* s);
+void convert_to_ltsmin_state(State* s, int *state, model_t model);
 State *convert_to_prob_state(chunk* s);
 
 static void
@@ -117,40 +117,52 @@ ProBloadGreyboxModel (model_t model, const char* model_name)
         Abort ("File does not exist: %s", ret_filename);
 
     start_prob();
-
+    printf("Started ProB - LTSmin\n");
     // Need to get init state so we can have var count
-    State *initState = get_init_state();
+    State *initState = prob_get_init_state();
     int var_count = prob_get_variable_count();
-
+    printf("VAR COUNT - LTSmin\n");
     // create the LTS type LTSmin will generate
     lts_type_t ltstype = lts_type_create();
 
     char **variables = prob_get_variable_names();
-
+    printf("VARIABLES - LTSmin\n");
+    for (int i = 0; i < var_count; i++) 
+    {
+        char buf[256];
+        snprintf(buf, sizeof buf, "%s%s", "type_", variables[i]);
+        const char* type_name = buf;
+        HREassert (type_name != NULL, "invalid type name");
+        
+        lts_type_set_format (ltstype, i, LTStypeChunk);
+    }
+    printf("LTSTYPE Format - LTSmin\n");
     // set state name & type
-    for (int i=0; i < var_count; ++i) 
+    for (int i = 0; i < var_count; ++i) 
     {
         lts_type_set_state_name(ltstype, i, variables[i]);
-        lts_type_set_state_typeno(ltstype, i, type);
+        lts_type_set_state_typeno(ltstype, i, i);
     }
+    printf("LTS State - LTSmin\n");
 
     // set the length of the state
     lts_type_set_state_length(ltstype, var_count);
+    printf("State Length - LTSmin\n");
+
+    // add an "Operation" type for edge labels
+    int operation_type = lts_type_add_type(ltstype, "Operation", NULL);
+    lts_type_set_format (ltstype, operation_type, LTStypeEnum);
 
     // edge label types
-    lts_type_set_edge_label_count (ltstype, prob_get_state_label_count());
-    for (int i = 0; i < prom_get_edge_count(); i++) 
-    {
-        lts_type_set_edge_label_name(ltstype, i, prom_get_edge_name(i));
-        int typeno = prom_get_edge_type(i);
-        const char* type_name = prom_get_type_name(typeno);
-        lts_type_set_edge_label_type(ltstype, i, type_name);
-        lts_type_set_edge_label_typeno(ltstype, i, typeno);
-    }
+    lts_type_set_edge_label_count(ltstype, 1);
+    lts_type_set_edge_label_name(ltstype, 0, "Operation");
+    lts_type_set_edge_label_type(ltstype, 0, "Operation");
+    lts_type_set_edge_label_typeno(ltstype, var_count + 1, operation_type);
+    printf("Operation - LTSmin\n");
 
     // done with ltstype
     lts_type_validate(ltstype);
-
+    printf("Type Validation - LTSmin\n");
     // make sure to set the lts-type before anything else in the GB
     GBsetLTStype(model, ltstype);
 
@@ -178,32 +190,31 @@ ProBloadGreyboxModel (model_t model, const char* model_name)
         dm_set(sl_info, i, i);
     }
 
-    int *foo = 1;
+    int *init_state[var_count];
+    convert_to_ltsmin_state(initState, &init_state, model);
 
     GBsetStateLabelInfo(model, sl_info);
     GBsetDMInfo (model, p_dm_info);
-    GBsetInitialState(model, &foo);
+    GBsetInitialState(model, &init_state);
     GBsetNextStateLong (model, ProBgetTransitionsLong);
 }
 
 /* Helper functions */
-
-// chunk
-// *convert_to_ltsmin_state(State* s)
-// {
-    // for (int i = 0; i < *s->size; i++) 
-    // {
-    //     Chunk* prob_chunk = &(*s.chunks[i]);
-    //     chunk ltsmin_chunk = malloc(sizeof(chunk) + prob_chunk->size);
-    //     memcpy(prob_chunk, ltsmin_chunk, prob_chunk->size + 1); 
-    //     
-    //     free((*s)->chunks[i].data);
-    // }
-    //
+void
+convert_to_ltsmin_state(State* s, int *state, model_t model)
+{
+    for (int i = 0; i < s->size; i++) 
+    {
+        Chunk* prob_chunk = &(s->chunks[i]);
+        int pidx = GBchunkPut(model, i, chunk_str(*s->chunks[i].data));
+        state[i] = pidx;
+        // free((*s)->chunks[i].data);
+    }
+    
     // free((*s)->chunks);
     // free(*s);
     // *s = NULL;
-// }
+}
 
 // State
 // *convert_to_prob_state(chunk* s)
