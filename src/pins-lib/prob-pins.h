@@ -7,13 +7,19 @@
 #include "../../prob_link_library/src/pins.h"
 
 // ProB Link Prototypes
-extern void start_prob();
-extern void stop_prob();
-extern State *get_init_state(void);
+extern void start_prob(void);
+extern void stop_prob(void);
+
+extern State *prob_get_init_state(void);
+extern State **prob_get_next_state(State*, char*, int*);
+
 extern int prob_get_variable_count(void);
 extern int prob_get_transition_group_count(void);
 extern int prob_get_state_label_count(void);
-extern State **get_next_prob_state(State*, char*, int*);
+
+extern char **prob_get_variable_names(void);
+extern char **prob_get_transition_names(void);
+extern char **prob_get_state_label_names(void);
 
 extern struct poptOption prob_options[];
 

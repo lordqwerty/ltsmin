@@ -103,24 +103,6 @@ ProBgetTransitionsLong (model_t model, int group, int *src, TransitionCB cb, voi
     return 0;
 }
 
-// chunk
-// *convert_to_ltsmin_state(State* s)
-// {
-//     state *ltsmin_state
-//     memcpy()
-
-//     return ltsmin_state;
-// }
-
-// State
-// *convert_to_prob_state(chunk* s)
-// {
-//     State *prob_state
-//     memcpy()
-
-//     return prob_state;
-// }
-
 void
 ProBloadGreyboxModel (model_t model, const char* model_name)
 {
@@ -143,26 +125,28 @@ ProBloadGreyboxModel (model_t model, const char* model_name)
     // create the LTS type LTSmin will generate
     lts_type_t ltstype = lts_type_create();
 
+    char **variables = prob_get_variable_names();
+
+    // set state name & type
+    for (int i=0; i < var_count; ++i) 
+    {
+        lts_type_set_state_name(ltstype, i, variables[i]);
+        lts_type_set_state_typeno(ltstype, i, type);
+    }
+
     // set the length of the state
     lts_type_set_state_length(ltstype, var_count);
 
-    // add an "StateId" type for a state slot
-    int state_id_type = lts_type_add_type(ltstype, "StateId", NULL);
-    lts_type_set_format (ltstype, state_id_type, LTStypeDirect);
-
-    // set state name & type
-    lts_type_set_state_name(ltstype, 0, "StateId");
-    lts_type_set_state_typeno(ltstype, 0, state_id_type);
-
-    // add an "Operation" type for edge labels
-    int operation_type = lts_type_add_type(ltstype, "Operation", NULL);
-    lts_type_set_format (ltstype, operation_type, LTStypeEnum);
-
     // edge label types
-    lts_type_set_edge_label_count(ltstype, 1);
-    lts_type_set_edge_label_name(ltstype, 0, "Operation");
-    lts_type_set_edge_label_type(ltstype, 0, "Operation");
-    lts_type_set_edge_label_typeno(ltstype, 0, operation_type);
+    lts_type_set_edge_label_count (ltstype, prob_get_state_label_count());
+    for (int i = 0; i < prom_get_edge_count(); i++) 
+    {
+        lts_type_set_edge_label_name(ltstype, i, prom_get_edge_name(i));
+        int typeno = prom_get_edge_type(i);
+        const char* type_name = prom_get_type_name(typeno);
+        lts_type_set_edge_label_type(ltstype, i, type_name);
+        lts_type_set_edge_label_typeno(ltstype, i, typeno);
+    }
 
     // done with ltstype
     lts_type_validate(ltstype);
@@ -170,9 +154,10 @@ ProBloadGreyboxModel (model_t model, const char* model_name)
     // make sure to set the lts-type before anything else in the GB
     GBsetLTStype(model, ltstype);
 
-    for(int i = 0; i < 1; i++)
+    char **trans = prob_get_transition_names();
+    for(int i = 0; i < prob_get_transition_group_count(); i++)
     {
-        GBchunkPut(model, operation_type, chunk_str("operations[i]"));
+        GBchunkPut( model, operation_type, chunk_str(trans[i]) );
     }
 
     gb_context_t ctx=(gb_context_t)RTmalloc(sizeof(struct grey_box_context));
@@ -200,3 +185,38 @@ ProBloadGreyboxModel (model_t model, const char* model_name)
     GBsetInitialState(model, &foo);
     GBsetNextStateLong (model, ProBgetTransitionsLong);
 }
+
+/* Helper functions */
+
+// chunk
+// *convert_to_ltsmin_state(State* s)
+// {
+    // for (int i = 0; i < *s->size; i++) 
+    // {
+    //     Chunk* prob_chunk = &(*s.chunks[i]);
+    //     chunk ltsmin_chunk = malloc(sizeof(chunk) + prob_chunk->size);
+    //     memcpy(prob_chunk, ltsmin_chunk, prob_chunk->size + 1); 
+    //     
+    //     free((*s)->chunks[i].data);
+    // }
+    //
+    // free((*s)->chunks);
+    // free(*s);
+    // *s = NULL;
+// }
+
+// State
+// *convert_to_prob_state(chunk* s)
+// {
+    // for (int i = 0; i < (int) *s->len; i++) 
+    // {
+    //     chunk ltsmin_chunk = &(*s.data);
+    //     Chunk* prob_chunk = malloc(sizeof(Chunk) + (int) ltsmin_chunk->len);
+    //     memcpy(ltsmin_chunk, prob_chunk, (int) ltsmin_chunk->len + 1); 
+
+    //     free((*s)->data);
+    // }
+
+    // free(*s);
+    // *s = NULL;
+// }
