@@ -57,7 +57,7 @@ int         (*prob_get_matrix_col_count)(int m);
 
 /* State Conversion functions */
 void convert_to_ltsmin_state(State* s, int *state, model_t model);
-State *convert_to_prob_state(chunk* s);
+State *convert_to_prob_state(chunk ltsmin_chunk);
 
 static void
 prob_popt (poptContext con,
@@ -101,6 +101,17 @@ ProBinitGreybox (model_t model, const char* model_name)
 static int
 ProBgetTransitionsLong (model_t model, int group, int *src, TransitionCB cb, void *ctx)
 {
+    State **next = malloc(sizeof(State));
+
+    for(int i = 0; i < 1; i++)
+    {
+        chunk ltsmin_chunk = GBchunkGet(model, group, src[i]);
+        next[i] = convert_to_prob_state(ltsmin_chunk);
+    }
+
+    // transition_info_t transition_info = { &destinations[i][1], 0 };
+    // cb(ctx, &transition_info, &destinations[i][0], NULL);
+
     return 0;
 }
 
@@ -126,7 +137,7 @@ ProBloadGreyboxModel (model_t model, const char* model_name)
     start_prob();
     
     // Need to get init state so we can have var count
-    State *initState = prob_get_init_state();
+    State *prob_init_state = prob_get_init_state();
     int var_count = prob_get_variable_count();
     
     // create the LTS type LTSmin will generate
@@ -194,8 +205,8 @@ ProBloadGreyboxModel (model_t model, const char* model_name)
         dm_set(sl_info, i, i);
     }
 
-    int *init_state[var_count];
-    convert_to_ltsmin_state(initState, &init_state, model);
+    int *init_state[prob_init_state->size];
+    convert_to_ltsmin_state(prob_init_state, &init_state, model);
 
     GBsetStateLabelInfo(model, sl_info);
     GBsetDMInfo (model, p_dm_info);
@@ -211,24 +222,23 @@ convert_to_ltsmin_state(State* s, int *state, model_t model)
 {
     for (int i = 0; i < s->size; i++) 
     {
-        Chunk* prob_chunk = &(s->chunks[i]);
         int chunk_id = GBchunkPut(model, i, chunk_str(s->chunks[i].data));
         state[i] = chunk_id;
     }
 }
 
-// State
-// *convert_to_prob_state(chunk* s)
-// {
-    // for (int i = 0; i < (int) *s->len; i++) 
-    // {
-    //     chunk ltsmin_chunk = &(*s.data);
-    //     Chunk* prob_chunk = malloc(sizeof(Chunk) + (int) ltsmin_chunk->len);
-    //     memcpy(ltsmin_chunk, prob_chunk, (int) ltsmin_chunk->len + 1); 
+State
+*convert_to_prob_state(chunk ltsmin_chunk)
+{
+    State *next_prob_state = malloc(sizeof(State));
+    next_prob_state->chunks = malloc(sizeof(Chunk) * (int) ltsmin_chunk.len);
+    next_prob_state->size = ltsmin_chunk.len;
 
-    //     free((*s)->data);
-    // }
+    for(int i = 0; i < ltsmin_chunk.len; i++)
+    {
+        next_prob_state->chunks[i].data = ltsmin_chunk.data;
+        next_prob_state->chunks[i].size = ltsmin_chunk.len; 
+    }
 
-    // free(*s);
-    // *s = NULL;
-// }
+    return next_prob_state;
+}
