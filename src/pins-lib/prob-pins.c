@@ -101,13 +101,12 @@ ProBinitGreybox (model_t model, const char* model_name)
 static int
 ProBgetTransitionsLong (model_t model, int group, int *src, TransitionCB cb, void *ctx)
 {
-    State **next = malloc(sizeof(State));
 
-    for(int i = 0; i < 1; i++)
-    {
-        chunk ltsmin_chunk = GBchunkGet(model, group, src[i]);
-        next[i] = convert_to_prob_state(ltsmin_chunk);
-    }
+    chunk ltsmin_chunk = GBchunkGet(model, group, src[0]);
+    State *next = convert_to_prob_state(ltsmin_chunk);
+
+    int *next_states[next->size];
+    convert_to_ltsmin_state(next, &next_states, model);
 
     // transition_info_t transition_info = { &destinations[i][1], 0 };
     // cb(ctx, &transition_info, &destinations[i][0], NULL);
@@ -136,27 +135,29 @@ ProBloadGreyboxModel (model_t model, const char* model_name)
 
     start_prob();
     
-    // Need to get init state so we can have var count
+    // Need to get init state so we can have counts
     State *prob_init_state = prob_get_init_state();
     int var_count = prob_get_variable_count();
     
     // create the LTS type LTSmin will generate
     lts_type_t ltstype = lts_type_create();
 
+    // set the length of the state
+    lts_type_set_state_length(ltstype, var_count);
+
     char **variables = prob_get_variable_names();
 
     for (int i = 0; i < var_count; i++) 
     {
-        char buf[256];
-        snprintf(buf, sizeof buf, "%s%s", "type_", variables[i]);
-        const char* type_name = buf;
+        const char* type_name = variables[i];
         HREassert (type_name != NULL, "invalid type name");
+        if (lts_type_add_type(ltstype, type_name, NULL) != i) 
+        {
+            Abort("Type number incorrect");
+        }
         
         lts_type_set_format (ltstype, i, LTStypeChunk);
     }
-
-    // set the length of the state
-    lts_type_set_state_length(ltstype, var_count);
 
     // set state name & type
     for (int i = 0; i < var_count; ++i) 
@@ -169,11 +170,15 @@ ProBloadGreyboxModel (model_t model, const char* model_name)
     int operation_type = lts_type_add_type(ltstype, "Operation", NULL);
     lts_type_set_format (ltstype, operation_type, LTStypeEnum);
 
-    // edge label types
-    lts_type_set_edge_label_count(ltstype, 1);
-    lts_type_set_edge_label_name(ltstype, 0, "Operation");
-    lts_type_set_edge_label_type(ltstype, 0, "Operation");
-    lts_type_set_edge_label_typeno(ltstype, 0, operation_type);
+    int sl_size = prob_get_state_label_count();
+    lts_type_set_edge_label_count(ltstype, sl_size);
+
+    char **sl_names = prob_get_state_label_names();
+    for(int i = 0; i < sl_size; i++)
+    {
+        lts_type_set_edge_label_name(ltstype, i, sl_names[i]);
+        lts_type_set_edge_label_typeno(ltstype, i, operation_type);
+    }
 
     // done with ltstype
     lts_type_validate(ltstype);
@@ -192,15 +197,14 @@ ProBloadGreyboxModel (model_t model, const char* model_name)
 
     matrix_t *p_dm_info = RTmalloc (sizeof *p_dm_info);
     
-    // Sets the B Transition group to just one with read/write access
+    // Sets the B Transition group
     dm_create(p_dm_info, prob_get_transition_group_count(), var_count);
 
     dm_set (p_dm_info, 0, 0);
 
-    int num_state_labels = prob_get_state_label_count();
     matrix_t *sl_info = RTmalloc (sizeof *sl_info);
-    dm_create(sl_info, num_state_labels, 1);
-    for (int i = 0; i < num_state_labels; i++) 
+    dm_create(sl_info, sl_size, 1);
+    for (int i = 0; i < sl_size; i++) 
     {
         dm_set(sl_info, i, i);
     }
