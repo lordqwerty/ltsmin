@@ -55,9 +55,45 @@ const char* (*prob_get_matrix_name)(int m);
 int         (*prob_get_matrix_row_count)(int m);
 int         (*prob_get_matrix_col_count)(int m);
 
+typedef struct grey_box_context {
+    int num_vars;
+    int op_type_no;
+} gb_context_t;
+
 /* State Conversion functions */
-void convert_to_ltsmin_state(State* s, int *state, model_t model);
-State *convert_to_prob_state(chunk ltsmin_chunk);
+static void
+convert_to_ltsmin_state(State* s, int *state, model_t model)
+{
+    for (int i = 0; i < s->size; i++)
+    {
+        chunk c;
+        c.data = s->chunks[i].data;
+        c.len = s->chunks[i].size;
+        int chunk_id = GBchunkPut(model, i, c);
+        state[i] = chunk_id;
+    }
+}
+
+static State
+*convert_to_prob_state(model_t model, int* src)
+{
+    State *next_prob_state = malloc(sizeof(State));
+
+    gb_context_t* ctx = (gb_context_t*) GBgetContext(model);
+
+    int vars = ctx->num_vars;
+
+    next_prob_state->chunks = malloc(sizeof(Chunk) * vars);
+    next_prob_state->size = vars;
+
+    for (int i = 0; i < vars; i++) {
+        chunk c = GBchunkGet(model, i, src[i]);
+        next_prob_state->chunks[i].data = c.data;
+        next_prob_state->chunks[i].size = c.len;
+    }
+
+    return next_prob_state;
+}
 
 static void
 prob_popt (poptContext con,
@@ -88,40 +124,42 @@ struct poptOption prob_options[]= {
     POPT_TABLEEND
 };
 
-typedef struct grey_box_context {
-    int todo;
-} *gb_context_t;
-
 void
 ProBinitGreybox (model_t model, const char* model_name)
 {
-    // Not called by LTSmin backend.
+    (void)model; (void)model_name;
 }
 
 static int
 ProBgetTransitionsLong (model_t model, int group, int *src, TransitionCB cb, void *ctx)
 {
-    chunk ltsmin_chunk = GBchunkGet(model, 0, src[0]);
-    char prob_transition_group[16];
-    chunk2string(ltsmin_chunk, 16, prob_transition_group);
-    
-    State *next = convert_to_prob_state(ltsmin_chunk);
+    gb_context_t* gb_ctx = (gb_context_t*) GBgetContext(model);
+
+    int operation_type = gb_ctx->op_type_no;
+
+    chunk op_name = GBchunkGet(model, operation_type, group);
+
+    State *next = convert_to_prob_state(model, src);
 
     int nr_successors;
-    State **successors = send_next_state(next, prob_transition_group, &nr_successors);
+    State **successors = send_next_state(next, op_name.data, &nr_successors);
 
-    int *next_states[nr_successors];
+    int vars = gb_ctx->num_vars;
+
     for(int i = 0; i < nr_successors; i++)
     {
-        convert_to_ltsmin_state(successors[i], &next_states, model);
+        int s[vars];
+
+        int transition_labels[1] = { group };
+        transition_info_t transition_info = { transition_labels, group, 0};
+
+        convert_to_ltsmin_state(successors[i], s, model);
+        cb(ctx, &transition_info, s, NULL);
     }
 
-    //convert_to_ltsmin_state(next, &next_states, model);
+    free(next);
 
-    // transition_info_t transition_info = { &destinations[i][1], 0 };
-    // cb(ctx, &transition_info, &destinations[i][0], NULL);
-
-    return 0;
+    return nr_successors;
 }
 
 void
@@ -178,16 +216,22 @@ ProBloadGreyboxModel (model_t model, const char* model_name)
 
     // add an "Operation" type for edge labels
     int operation_type = lts_type_add_type(ltstype, "Operation", NULL);
-    lts_type_set_format (ltstype, operation_type, LTStypeEnum);
+    lts_type_set_format (ltstype, operation_type, LTStypeChunk);
 
+    lts_type_set_edge_label_count(ltstype, 1);
+    lts_type_set_edge_label_name(ltstype, 0, "operation");
+    lts_type_set_edge_label_typeno(ltstype, 0, operation_type);
+
+
+    // init state labels
     int sl_size = prob_get_state_label_count();
-    lts_type_set_edge_label_count(ltstype, sl_size);
-
     char **sl_names = prob_get_state_label_names();
-    for(int i = 0; i < sl_size; i++)
-    {
-        lts_type_set_edge_label_name(ltstype, i, sl_names[i]);
-        lts_type_set_edge_label_typeno(ltstype, i, operation_type);
+    lts_type_set_state_label_count (ltstype, sl_size);
+    int bool_is_new, bool_type = lts_type_add_type(ltstype, LTSMIN_TYPE_BOOL, NULL);
+
+    for (int i = 0; i < sl_size; i++) {
+        lts_type_set_state_label_name (ltstype, i, sl_names[i]);
+        lts_type_set_state_label_typeno (ltstype, i, bool_type);
     }
 
     // done with ltstype
@@ -196,65 +240,54 @@ ProBloadGreyboxModel (model_t model, const char* model_name)
     // make sure to set the lts-type before anything else in the GB
     GBsetLTStype(model, ltstype);
 
+    if (bool_is_new) {
+        GBchunkPutAt(model, bool_type, chunk_str(LTSMIN_VALUE_BOOL_FALSE), 0);
+        GBchunkPutAt(model, bool_type, chunk_str(LTSMIN_VALUE_BOOL_TRUE ), 1);
+    }
+
     char **trans = prob_get_transition_names();
     for(int i = 0; i < prob_get_transition_group_count(); i++)
     {
         GBchunkPut( model, operation_type, chunk_str(trans[i]) );
     }
 
-    gb_context_t ctx=(gb_context_t)RTmalloc(sizeof(struct grey_box_context));
+    gb_context_t* ctx = (gb_context_t*) RTmalloc(sizeof(gb_context_t));
+    ctx->num_vars = var_count;
+    ctx->op_type_no = operation_type;
     GBsetContext(model, ctx);
 
-    matrix_t *p_dm_info = RTmalloc (sizeof *p_dm_info);
-    
-    // Sets the B Transition group
+    matrix_t *p_dm_info = RTmalloc (sizeof(matrix_t));
     dm_create(p_dm_info, prob_get_transition_group_count(), var_count);
-
-    dm_set (p_dm_info, 0, 0);
-
-    matrix_t *sl_info = RTmalloc (sizeof *sl_info);
-    dm_create(sl_info, sl_size, 1);
-    for (int i = 0; i < sl_size; i++) 
+    for (int i = 0; i < prob_get_transition_group_count(); i++)
     {
-        dm_set(sl_info, i, i);
+        for (int j = 0; j < var_count; j++)
+        {
+            dm_set(p_dm_info, i, j);
+        }
     }
 
-    int *init_state[prob_init_state->size];
-    convert_to_ltsmin_state(prob_init_state, &init_state, model);
+    matrix_t *sl_info = RTmalloc (sizeof(matrix_t));
+    dm_create(sl_info, sl_size, var_count);
+    for (int i = 0; i < sl_size; i++) 
+    {
+        for (int j = 0; j < var_count; j++) {
+            dm_set(sl_info, i, j);
+        }
+    }
+
+    // set the label group implementation
+    sl_group_t* sl_group_all = malloc(sizeof(sl_group_t) + (sl_size) * sizeof(int));
+    sl_group_all->count = sl_size;
+    for(int i=0; i < sl_group_all->count; i++) sl_group_all->sl_idx[i] = i;
+    GBsetStateLabelGroupInfo(model, GB_SL_ALL, sl_group_all);
+
+    int init_state[prob_init_state->size];
+    convert_to_ltsmin_state(prob_init_state, init_state, model);
 
     GBsetStateLabelInfo(model, sl_info);
     GBsetDMInfo (model, p_dm_info);
-    GBsetInitialState(model, &init_state);
+    GBsetInitialState(model, init_state);
     GBsetNextStateLong (model, ProBgetTransitionsLong);
 
-    //atexit(ProBExit);
-}
-
-/* Helper functions */
-void
-convert_to_ltsmin_state(State* s, int *state, model_t model)
-{
-    for (int i = 0; i < s->size; i++) 
-    {
-        int chunk_id = GBchunkPut(model, i, chunk_str(s->chunks[i].data));
-        state[i] = chunk_id;
-    }
-}
-
-State
-*convert_to_prob_state(chunk ltsmin_chunk)
-{
-    State *next_prob_state = malloc(sizeof(State));
-    next_prob_state->chunks = malloc(sizeof(Chunk) * (int) ltsmin_chunk.len);
-    next_prob_state->size = (int) ltsmin_chunk.len;
-
-    printf("ltsmin_chunk size: %d", (int) ltsmin_chunk.len);
-
-    for(int i = 0; i < ltsmin_chunk.len; i++)
-    {
-        next_prob_state->chunks[i].data = ltsmin_chunk.data;
-        next_prob_state->chunks[i].size = ltsmin_chunk.len; 
-    }
-
-    return next_prob_state;
+    atexit(ProBExit);
 }
