@@ -281,10 +281,6 @@ AS_IF([test x"$have_libtommath" = xyes],
 
 AC_CHECK_HEADER([popt.h],[], [AC_MSG_FAILURE([popt.h not found.])])
 
-# Checks for ZeroMQ being installed and on LD_PATH
-AC_CHECK_HEADER([zmq.h],[], [AC_MSG_FAILURE([zmq.h not found.])])
-AC_CHECK_HEADER([czmq.h],[], [AC_MSG_FAILURE([czmq.h not found.])])
-
 AC_CACHE_SAVE
 
 # Checks for typedefs, structures, and compiler characteristics.
