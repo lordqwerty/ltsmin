@@ -101,12 +101,22 @@ ProBinitGreybox (model_t model, const char* model_name)
 static int
 ProBgetTransitionsLong (model_t model, int group, int *src, TransitionCB cb, void *ctx)
 {
-
-    chunk ltsmin_chunk = GBchunkGet(model, group, src[0]);
+    chunk ltsmin_chunk = GBchunkGet(model, 0, src[0]);
+    char prob_transition_group[16];
+    chunk2string(ltsmin_chunk, 16, prob_transition_group);
+    
     State *next = convert_to_prob_state(ltsmin_chunk);
 
-    int *next_states[next->size];
-    convert_to_ltsmin_state(next, &next_states, model);
+    int nr_successors;
+    State **successors = send_next_state(next, prob_transition_group, &nr_successors);
+
+    int *next_states[nr_successors];
+    for(int i = 0; i < nr_successors; i++)
+    {
+        convert_to_ltsmin_state(successors[i], &next_states, model);
+    }
+
+    //convert_to_ltsmin_state(next, &next_states, model);
 
     // transition_info_t transition_info = { &destinations[i][1], 0 };
     // cb(ctx, &transition_info, &destinations[i][0], NULL);
@@ -217,7 +227,7 @@ ProBloadGreyboxModel (model_t model, const char* model_name)
     GBsetInitialState(model, &init_state);
     GBsetNextStateLong (model, ProBgetTransitionsLong);
 
-    atexit(ProBExit);
+    //atexit(ProBExit);
 }
 
 /* Helper functions */
@@ -236,7 +246,9 @@ State
 {
     State *next_prob_state = malloc(sizeof(State));
     next_prob_state->chunks = malloc(sizeof(Chunk) * (int) ltsmin_chunk.len);
-    next_prob_state->size = ltsmin_chunk.len;
+    next_prob_state->size = (int) ltsmin_chunk.len;
+
+    printf("ltsmin_chunk size: %d", (int) ltsmin_chunk.len);
 
     for(int i = 0; i < ltsmin_chunk.len; i++)
     {
