@@ -33,12 +33,16 @@ if HAVE_LIBPBES
 bin_PROGRAMS += pinssim-pbes
 endif
 
-if HAVE_DVE
-bin_PROGRAMS += pinssim-dve
-endif
+#if HAVE_DVE
+#bin_PROGRAMS += pinssim-dve
+#endif
 
-if HAVE_SPINS
-bin_PROGRAMS += pinssim-prom
+#if HAVE_SPINS
+#bin_PROGRAMS += pinssim-prom
+#endif
+
+if HAVE_LIBPROB
+bin_PROGRAMS += pinssim-prob
 endif
 
 if HAVE_SYLVAN
@@ -112,3 +116,12 @@ pinssim_prom_LDADD   += $(VSET_LIBS) $(SPINS_LIBS)
 pinssim_prom_CPPFLAGS = -DSPINS $(SPINS_CPPFLAGS) $(SYM_CPPFLAGS)
 pinssim_prom_LDFLAGS  = $(SPINS_LDFLAGS) $(SYM_LDFLAGS)
 nodist_EXTRA_pinssim_prom_SOURCES = automake-force-linker.cxx # req. by vset
+
+# pinssim-prob
+pinssim_prob_SOURCES   = pinssim.c
+pinssim_prob_SOURCES  += ../pins-lib/prob-pins.c ../pins-lib/prob-pins.h
+pinssim_prob_LDADD     = $(PINS_LIBS)
+pinssim_prob_LDADD    += $(VSET_LIBS) $(PROB_LIBS)
+pinssim_prob_CPPFLAGS  = -DPROB $(SYM_CPP_FLAGS)
+pinssim_prob_LDFLAGS   = $(PROB_LDFLAGS) $(SYM_LD_FLAGS)
+nodist_EXTRA_pinssim_prob_SOURCES = automake-force-linker.cxx
