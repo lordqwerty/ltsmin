@@ -224,7 +224,7 @@ ProBloadGreyboxModel (model_t model, const char* model_name)
 
 
     // init state labels
-    int sl_size = prob_get_state_label_count();
+    int sl_size = 0;
     char **sl_names = prob_get_state_label_names();
     lts_type_set_state_label_count (ltstype, sl_size);
     int bool_is_new, bool_type = lts_type_add_type(ltstype, LTSMIN_TYPE_BOOL, &bool_is_new);
