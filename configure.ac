@@ -202,7 +202,7 @@ AC_SUBST([BUDDY_LIBS],['${top_builddir}/buddy/src/libbdd.la -lm'])
 AC_SUBST([BUDDY_CPPFLAGS],['-I${top_srcdir}/buddy/src'])
 AC_SUBST([BUDDY_LDFLAGS])
 
-AC_SUBST([PROB_LIBS],['-L${top_builddir}/prob_link_library/ -lzmq -lprob'])
+AC_SUBST([PROB_LIBS],['-L${top_builddir}/prob_link_library/ -lprob'])
 AC_SUBST([PROB_CPPFLAGS],['-I${top_srcdir}/prob_link_library/src -I${top_srcdir}/prob_link_library/zmq/include'])
 AC_SUBST([PROB_LDFLAGS],[''])
 
