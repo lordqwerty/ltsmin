@@ -33,3 +33,9 @@ include/
 /examples/brp.lps
 /examples/brp.pbes
 /examples/ieee-11073.lps
+
+ltsmin.config
+ltsmin.creator
+ltsmin.files
+ltsmin.includes
+
