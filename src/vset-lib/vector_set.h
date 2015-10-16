@@ -171,6 +171,11 @@ extern void vset_example(vset_t set,int *e);
 extern void vset_example_match(vset_t set, int *e, int p_len, int* proj, int*match);
 
 /**
+\brief Randomly produce a member of a non-empty set.
+*/
+extern void vset_random(vset_t set,int *e);
+
+/**
 \brief Copy a vset.
 */
 extern void vset_copy(vset_t dst,vset_t src);
@@ -179,6 +184,11 @@ extern void vset_copy(vset_t dst,vset_t src);
 \brief Project src down to dst.
 */
 extern void vset_project(vset_t dst,vset_t src);
+
+/**
+\brief Project src down to dst and minus with minus.
+*/
+extern void vset_project_minus(vset_t dst,vset_t src,vset_t minus);
 
 /**
 \brief dst := dst U src
@@ -266,6 +276,11 @@ extern void vrel_update(vrel_t rel, vset_t set, vrel_update_cb cb, void *context
 \brief Add an element to a relation, with a copy vector.
 */
 extern void vrel_add_cpy(vrel_t rel,const int* src,const int* dst,const int* cpy);
+
+/**
+\brief Add an element to a relation, with a copy vector, and an action
+*/
+extern void vrel_add_act(vrel_t rel,const int* src,const int* dst,const int* cpy,const int act);
 
 /**
 \brief Count the number of diagram nodes and the number of elements stored.

@@ -1,5 +1,5 @@
 AC_PREREQ(2.60)
-AC_INIT([ltsmin],[2.0],[ltsmin-support@cs.utwente.nl])
+AC_INIT([ltsmin],[2.1],[ltsmin-support@lists.utwente.nl])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_AUX_DIR([autotools])
 AM_INIT_AUTOMAKE([foreign subdir-objects])
@@ -57,6 +57,9 @@ ACX_PTHREAD(
    CXXFLAGS="$CXXFLAGS $PTHREAD_CFLAGS"
    CC="$PTHREAD_CC"],
   [AC_MSG_FAILURE([no pthread support found.])])
+
+# explicitly link if necessary  
+AC_CHECK_LIB(pthread, pthread_create, [LIBS="$LIBS -lpthread"])
 
 dnl Newer libtool allows this instead:
 dnl LT_PREREQ(2.2)
@@ -362,7 +365,7 @@ fi
 
 AC_SUBST(AM_CPPFLAGS,['-I${top_srcdir}/src -I${top_builddir}/src'])
 
-AC_SUBST([SYLVAN_LIBS],['${top_builddir}/sylvan/libsylvan.la'])
+AC_SUBST([SYLVAN_LIBS],['${top_builddir}/sylvan/src/libsylvan.la'])
 AC_SUBST([SYLVAN_CPPFLAGS],['-I${top_srcdir}/sylvan/src'])
 AC_SUBST([SYLVAN_LDFLAGS])
 
@@ -371,10 +374,25 @@ AC_CHECK_PROGS(OPAAL_LTSMIN, [opaal_ltsmin])
 AC_ARG_WITH([scoop],[AS_HELP_STRING([--with-scoop],[Compile scoop])],[],[
     AC_CHECK_PROG(GHC, ghc, ghc)
     AC_CHECK_PROG(HAPPY, happy, happy)
-    if test -z "$GHC" -o -z "$HAPPY" ; then
+    AC_CHECK_PROG(GHCPKG, ghc-pkg, ghcpkg)
+    if test -z "$GHC" -o -z "$HAPPY" -o -z "$GHCPKG" ; then    
         [with_scoop=no]
     else
-        [with_scoop=yes]
+        # the following madness is necessary because the containers package on Ubuntu
+        # installed with ghc-pkg seems incorrectly linked:
+        # https://stackoverflow.com/questions/27291531/haskell-linking-with-dynamic-libraries-on-ubuntu
+        # Note: it might after all be a better idea to find out whether the mapa2lts-* tools can be linked with GHC itself.
+        # But this may prove difficult where the mpi linker is used, e.g. in the mapa2lts-dist tool.
+        set -o pipefail
+        GHC_DEEPSEQ=`ghc-pkg field deepseq library-dirs 2> /dev/null | sed -n -e 's/^.* //p' | sed ':a;N;$!ba;s/\n/ -Wl,-rpath,/g'`
+        if test -z "$GHC_DEEPSEQ" ; then
+            AC_MSG_WARN([GHC package deepseq not found])
+            [with_scoop=no]
+    	else
+            AC_MSG_NOTICE([GHC package deepseq found])    	    
+            AC_SUBST(SCOOP_LDFLAGS, ["-Wl,-rpath,$GHC_DEEPSEQ"])
+            [with_scoop=yes]
+       	fi
     fi
 ])
 if test "x$with_scoop" == xyes; then
@@ -461,7 +479,6 @@ AC_CONFIG_FILES([
        src/pins2lts-seq/Makefile
        src/pins2lts-sym/Makefile
        src/pins-open/Makefile
-       src/pinssim/Makefile
        src/spg/Makefile
        src/dm/Makefile
        src/bignum/Makefile
@@ -498,7 +515,7 @@ Configuration:
     OPAAL    = ${have_opaal:-TBB malloc NOT FOUND, building without opaal support}
     PBES     = ${acx_pbes:-NOT FOUND, building without PBES support}
     PROB     = ${have_prob:-NOT FOUND, building without ProB support}
-    SCOOP    = ${have_scoop:-NO, either scoop was disabled or ghc/happy could not be found}
+    SCOOP    = ${have_scoop:-NO, either scoop was disabled or ghc/happy/ghc-pkg/hashmap/deepseq could not be found}
     SPINS    = ${acx_spins:-NO, JDK or Ant not found (override with --with-spins)}
     SYLVAN   = ${have_sylvan:-NO, only on 64-bit systems (override with --with-sylvan)}
     XMLTO    = ${XMLTO:-NOT FOUND, not building manpages}

@@ -160,6 +160,13 @@ default_zip(vset_t dst, vset_t src)
 }
 
 static void
+default_set_project_minus(vset_t dst, vset_t src, vset_t minus)
+{
+    dst->dom->shared.set_project(dst, src);
+    dst->dom->shared.set_minus(dst, minus);
+}
+
+static void
 default_reorder()
 {
     Warning(info,"reorder request ignored");
@@ -241,6 +248,7 @@ void vdom_init_shared(vdom_t dom,int n)
     dom->shared.set_update=default_set_update;
 	dom->shared.reorder=default_reorder;
 	dom->shared.set_least_fixpoint=default_least_fixpoint;
+    dom->shared.set_project_minus=default_set_project_minus;
     dom->shared.names = RTmalloc(n * sizeof(char*));
     for (int i = 0; i < n; i++) dom->shared.names[i] = NULL;
 }
@@ -251,7 +259,7 @@ void vdom_set_name(vdom_t dom, int i, char* name) {
 }
 
 char* vdom_get_name(vdom_t dom, int i) {
-    if (i >= dom->shared.size) Abort("Variable does not exist");
+    if (i >= dom->shared.size) { Abort("Variable %d does not exist", i); }
     return dom->shared.names[i];
 }
 
@@ -387,6 +395,15 @@ void vset_example(vset_t set,int *e){
        set->dom->shared.set_example(set,e);
 }
 
+void vset_random(vset_t set,int *e){
+    if (set->dom->shared.set_random==NULL) {
+        Warning(hre_debug, "Generating random elements not supported.");
+        set->dom->shared.set_example(set, e);
+    } else {
+       set->dom->shared.set_random(set, e);
+    }
+}
+
 void vset_example_match(vset_t set,int *e, int p_len, int* proj, int* match){
         set->dom->shared.set_example_match(set,e,p_len,proj,match);
 }
@@ -431,12 +448,47 @@ void vset_project(vset_t dst,vset_t src){
 	dst->dom->shared.set_project(dst,src);
 }
 
+void vset_project_minus(vset_t dst,vset_t src,vset_t minus){
+    dst->dom->shared.set_project_minus(dst,src,minus);
+}
+
 void vrel_add(vrel_t rel,const int* src, const int* dst){
 	rel->dom->shared.rel_add(rel,src,dst);
 }
 
 void vrel_add_cpy(vrel_t rel,const int* src, const int* dst, const int* cpy){
     rel->dom->shared.rel_add_cpy(rel,src,dst,cpy);
+}
+
+static void
+default_rel_add_act(vrel_t rel, const int* src, const int* dst, const int* cpy, const int act)
+{
+    rel->dom->shared.rel_add(rel,src,dst);
+    (void)cpy;
+    (void)act;
+}
+
+static void
+default_rel_add_act_cpy(vrel_t rel, const int* src, const int* dst, const int* cpy, const int act)
+{
+    rel->dom->shared.rel_add_cpy(rel,src,dst,cpy);
+    (void)act;
+}
+
+void
+vrel_add_act(vrel_t rel,const int* src, const int* dst, const int* cpy, const int act)
+{
+    if (rel->dom->shared.rel_add_act == NULL) {
+        if (vdom_supports_cpy(rel->dom)) {
+            Warning(info, "vrel_add_act not supported; falling back to vrel_add_cpy");
+            rel->dom->shared.rel_add_act = default_rel_add_act_cpy;
+        } else {
+            Warning(info, "vrel_add_act not supported; falling back to vrel_add");
+            rel->dom->shared.rel_add_act = default_rel_add_act;
+        }
+    }
+
+    rel->dom->shared.rel_add_act(rel,src,dst,cpy,act);
 }
 
 void vrel_update(vrel_t rel, vset_t set, vrel_update_cb cb, void *context) {
@@ -481,7 +533,11 @@ void vrel_dot(FILE* fp, vrel_t src) {
 }
 
 void vset_join(vset_t dst, vset_t left, vset_t right) {
-    dst->dom->shared.set_join(dst,left,right);
+    if (dst->dom->shared.set_join==NULL){
+        Abort("Vector set implementation does not support vset_join operation.");
+    } else {
+        dst->dom->shared.set_join(dst,left,right);
+    }
 }
 
 void
